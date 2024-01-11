@@ -3,6 +3,7 @@ public class EdgeNode {
     private float computationScore;
     private float verficationScore;
 
+
     
     public EdgeNode(String nodeId, float computationScore, float verficationScore) {
         this.nodeId = nodeId;
@@ -29,17 +30,9 @@ public class EdgeNode {
         this.verficationScore = verficationScore;
     }
 
-    // public void incrementScore(float Score){
-    //     Score++;
-    // }
-
-    // public void decrementScore(float Score){
-    //     Score--;
-    // }
-
 
     public float CalculateTrustScore(){
-        float trust =this.computationScore + this.verficationScore;
+        float trust = (float)(0.65*this.computationScore + 0.35*this.verficationScore);
         return trust;
     }
 
