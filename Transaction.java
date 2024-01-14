@@ -7,7 +7,6 @@ public class Transaction {
 
 
     
-
     public Transaction(String transactionId, String typeTx, boolean negativelyVerified, EdgeNode computedEdgeNode,
             EdgeNode verifiedEdgeNode) {
         TransactionId = transactionId;

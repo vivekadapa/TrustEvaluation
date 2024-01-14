@@ -65,7 +65,7 @@ public class Main {
                 }
             }
         }
-
+        
         System.out.println("Trust Score of nn1 = " + nn1.CalculateTrustScore());
         System.out.println("Trust Score of cc1 = " + cc1.CalculateTrustScore());
         System.out.println("Trust Score of cc2 = " + cc2.CalculateTrustScore());

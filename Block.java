@@ -5,11 +5,9 @@ class Block{
     private List<Transaction> transactions;
     private String previousHash;
     private String blockHash;
-
-
     
     public Block(List<Transaction> transactions, String previousHash, String blockHash) {
-        this.timeStamp = System.currentTimeMillis();;
+        this.timeStamp = System.currentTimeMillis();
         this.transactions = transactions;
         this.previousHash = previousHash;
         this.blockHash = blockHash;
