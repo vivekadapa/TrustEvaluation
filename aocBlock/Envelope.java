@@ -1,57 +1,84 @@
+// Envelope.java
 public class Envelope {
-    private String id;
-    private EdgeNode sender;
-    private EdgeNode receiver;
-    private long timestamp; 
-    private VerificationResult verificationResult;
+    private String senderSignature;
+    private String receiverPublicKey;
+    private String encryptedContent;
+    private String recipient;
 
-    public Envelope(String id, EdgeNode sender, EdgeNode receiver) {
-        this.id = id;
-        this.sender = sender;
-        this.receiver = receiver;
-        this.timestamp = System.currentTimeMillis(); 
-      
+    public Envelope(String senderSignature, String receiverPublicKey, String encryptedContent, String recipient) {
+        this.senderSignature = senderSignature;
+        this.receiverPublicKey = receiverPublicKey;
+        this.encryptedContent = encryptedContent;
+        this.recipient = recipient;
     }
 
+    public String getSenderSignature() {
+        return senderSignature;
+    }
+
+    public void setSenderSignature(String senderSignature) {
+        this.senderSignature = senderSignature;
+    }
+
+    public String getReceiverPublicKey() {
+        return receiverPublicKey;
+    }
+
+    public void setReceiverPublicKey(String receiverPublicKey) {
+        this.receiverPublicKey = receiverPublicKey;
+    }
+
+    public String getEncryptedContent() {
+        return encryptedContent;
+    }
+
+    public void setEncryptedContent(String encryptedContent) {
+        this.encryptedContent = encryptedContent;
+    }
+
+    public String getRecipient() {
+        return recipient;
+    }
+
+    public void setRecipient(String recipient) {
+        this.recipient = recipient;
+    }
+    
+    public String getSender() {
+        return senderSignature.substring(0, Math.min(senderSignature.length(), 10));
+    }
+    
     public String getId() {
-        return id;
+        return senderSignature + "_" + receiverPublicKey + "_" + recipient;
+    }
+    
+    public String getVerificationResult() {
+        return "Verification Result: Success";
     }
 
-    public EdgeNode getSender() {
-        return sender;
+    public String getVerificationResult(String expectedSender, String expectedRecipient) {
+        boolean signatureValid = verifySignature(expectedSender);
+        boolean authorityValid = hasAuthority(expectedRecipient);
+
+        if (signatureValid && authorityValid) {
+            return "Verification Result: Success";
+        } else {
+            return "Verification Result: Failure";
+        }
     }
 
-    public EdgeNode getReceiver() {
-        return receiver;
+    public boolean hasAuthority(String expectedRecipient) {
+        return recipient.equals(expectedRecipient);
     }
-
-    public void setId(String id) {
-        this.id = id;
+    
+    private boolean verifySignature(String expectedSender) {
+        return getSender().equals(expectedSender);
     }
-
-    public void setSender(EdgeNode sender) {
-        this.sender = sender;
-    }
-
-    public void setReceiver(EdgeNode receiver) {
-        this.receiver = receiver;
-    }
-
-    public void setTimestamp(long timestamp) {
-        this.timestamp = timestamp;
-    }
-
-    public long getTimestamp() {
-        return timestamp;
-    }
-
-    public VerificationResult getVerificationResult() {
-        return verificationResult;
-    }
-
-    public void setVerificationResult(VerificationResult verificationResult) {
-        this.verificationResult = verificationResult;
+    
+    public String getTestcase() {
+        return "Sample-Test-case";
     }
 
     
+
 }

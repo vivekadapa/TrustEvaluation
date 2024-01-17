@@ -1,54 +1,40 @@
 import java.util.ArrayList;
 import java.util.List;
 
-
 public class AocBlock {
     private List<Envelope> envelopes;
-    private long timestamp;
 
-    public AocBlock(long timestamp) {
+    public AocBlock() {
         this.envelopes = new ArrayList<>();
-        this.timestamp = timestamp;
     }
 
     public void addEnvelope(Envelope envelope) {
-        envelopes.add(envelope);
-    }
-
-    public void processEnvelopes() {
-        for (Envelope envelope : envelopes) {
-            VerificationResult verificationResult = verify(envelope);
-            envelope.setVerificationResult(verificationResult);
-
-            if (verificationResult.isSuccess()) {
-                executeTask(envelope);
-            }
-        }
-        System.out.println("\n");
+        this.envelopes.add(envelope);
     }
 
     public List<Envelope> getEnvelopes() {
         return envelopes;
     }
 
-    public void setEnvelopes(List<Envelope> envelopes) {
-        this.envelopes = envelopes;
-    }
+    public static void main(String[] args) {
+        AocBlock aocBlock = new AocBlock();
+        NearbyEdgeNode nearbyEdgeNode = new NearbyEdgeNode("secret@a#12#b"); // pass secret key
+        CooperativeEdgeNode cooperativeEdgeNode = new CooperativeEdgeNode("public@cooperativenode");// pass public key
+     
+        Envelope envelope1 = nearbyEdgeNode.releaseSubTask("secret@a#12#b", "Task", "public@cooperativenode", "123");
 
-    public long getTimestamp() {
-        return timestamp;
-    }
+        cooperativeEdgeNode.processEnvelope(envelope1);
+        aocBlock.addEnvelope(envelope1);
 
-    public void setTimestamp(long timestamp) {
-        this.timestamp = timestamp;
-    }
+        Envelope envelope2 = cooperativeEdgeNode.broadcastComputationResult("secret@a#12#b",
+                "I am the task", "public@cooperativenode");
 
-    private VerificationResult verify(Envelope envelope) {
-        return new VerificationResult(true, "Verification successful");
-    }
 
-    private void executeTask(Envelope envelope) {
-        System.out.println("Execution of task for envelope " + envelope.getId());
-    }
+        aocBlock.addEnvelope(envelope2);
 
+        List<Envelope> blockEnvelopes = aocBlock.getEnvelopes();
+        for (Envelope envelope : blockEnvelopes) {
+            System.out.println("Envelope ID: " + envelope.getId());
+        }
+    }
 }
