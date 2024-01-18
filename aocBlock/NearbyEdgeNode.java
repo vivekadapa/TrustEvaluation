@@ -9,6 +9,7 @@ public class NearbyEdgeNode {
     public Envelope releaseSubTask(String skg, String enT, String pki, String t1) {
         String senderSignature = sign(skg, enT, pki, t1);
         String encryptedContent = EncryptionUtils.encrypt(pki, "helper-content");
+        
        System.out.println("Encrypted Content: "+ encryptedContent.toString());
         return new Envelope(senderSignature, pki, encryptedContent, "public@cooperativenode");
     }

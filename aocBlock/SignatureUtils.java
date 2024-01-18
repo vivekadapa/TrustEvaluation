@@ -4,7 +4,7 @@ public class SignatureUtils {
         for (String content : contents) {
             dataToSign.append(content);
         }
-        int hashCode = dataToSign.toString().hashCode();
+       int hashCode = dataToSign.toString().hashCode();
         return String.valueOf(hashCode);
     }
 }

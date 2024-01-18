@@ -27,14 +27,20 @@ public class AocBlock {
         aocBlock.addEnvelope(envelope1);
 
         Envelope envelope2 = cooperativeEdgeNode.broadcastComputationResult("secret@a#12#b",
-                "I am the task", "public@cooperativenode");
+                "Demo task", "public@cooperativenode");
 
 
         aocBlock.addEnvelope(envelope2);
+        
+        String hashBlock=EncryptionUtils.hash(aocBlock.toString());
+        System.out.println("Block Hash: " + hashBlock);
+        String signBlock=SignatureUtils.sign("secret@a#12#b",aocBlock.toString());
+        System.out.println("Signature of the block : " + signBlock);
 
         List<Envelope> blockEnvelopes = aocBlock.getEnvelopes();
         for (Envelope envelope : blockEnvelopes) {
             System.out.println("Envelope ID: " + envelope.getId());
         }
+
     }
 }
