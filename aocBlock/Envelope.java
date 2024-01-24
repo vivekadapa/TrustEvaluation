@@ -1,83 +1,122 @@
 // Envelope.java
+
+enum EnvelopeType {
+    envrv,
+    envcs,
+    envvs,
+    envcm,
+    envch,
+    envpr,
+    envvt
+}
+
+
 public class Envelope {
-    private String senderSignature;
-    private String receiverPublicKey;
-    private String encryptedContent;
-    private String recipient;
+    private EnvelopeType type;
+    private String envId;
+    private Node sentBy;
+    private Node receivedBy;
+    private SubTask subtask;
+    private String result;
+        
 
-    public Envelope(String senderSignature, String receiverPublicKey, String encryptedContent, String recipient) {
-        this.senderSignature = senderSignature;
-        this.receiverPublicKey = receiverPublicKey;
-        this.encryptedContent = encryptedContent;
-        this.recipient = recipient;
-    }
 
-    public String getSenderSignature() {
-        return senderSignature;
-    }
 
-    public void setSenderSignature(String senderSignature) {
-        this.senderSignature = senderSignature;
-    }
-
-    public String getReceiverPublicKey() {
-        return receiverPublicKey;
-    }
-
-    public void setReceiverPublicKey(String receiverPublicKey) {
-        this.receiverPublicKey = receiverPublicKey;
-    }
-
-    public String getEncryptedContent() {
-        return encryptedContent;
-    }
-
-    public void setEncryptedContent(String encryptedContent) {
-        this.encryptedContent = encryptedContent;
-    }
-
-    public String getRecipient() {
-        return recipient;
-    }
-
-    public void setRecipient(String recipient) {
-        this.recipient = recipient;
-    }
     
-    public String getSender() {
-        return senderSignature.substring(0, Math.min(senderSignature.length(), 10));
-    }
     
-    public String getId() {
-        return senderSignature + "_" + receiverPublicKey + "_" + recipient;
-    }
-    
-    public String getVerificationResult() {
-        return "Verification Result: Success";
+    public Envelope(EnvelopeType type, String envId, Node sentBy, SubTask subtask, String result) {
+        this.type = type;
+        this.envId = envId;
+        this.sentBy = sentBy;
+        this.subtask = subtask;
+        this.result = result;
     }
 
-    public String getVerificationResult(String expectedSender, String expectedRecipient) {
-        boolean signatureValid = verifySignature(expectedSender);
-        boolean authorityValid = hasAuthority(expectedRecipient);
 
-        if (signatureValid && authorityValid) {
-            return "Verification Result: Success";
-        } else {
-            return "Verification Result: Failure";
-        }
+
+    public Envelope(EnvelopeType type, String envId, Node sentBy, Node receivedBy, SubTask subtask, String result) {
+        this.type = type;
+        this.envId = envId;
+        this.sentBy = sentBy;
+        this.receivedBy = receivedBy;
+        this.subtask = subtask;
+        this.result = result;
     }
 
-    public boolean hasAuthority(String expectedRecipient) {
-        return recipient.equals(expectedRecipient);
+
+
+    public EnvelopeType getType() {
+        return type;
     }
+
+
+
+    public void setType(EnvelopeType type) {
+        this.type = type;
+    }
+
+
+
+    public String getEnvId() {
+        return envId;
+    }
+
+
+
+    public void setEnvId(String envId) {
+        this.envId = envId;
+    }
+
+
+
+    public Node getSentBy() {
+        return sentBy;
+    }
+
+
+
+    public void setSentBy(Node sentBy) {
+        this.sentBy = sentBy;
+    }
+
+
+
+    public SubTask getSubtask() {
+        return subtask;
+    }
+
+
+
+    public void setSubtask(SubTask subtask) {
+        this.subtask = subtask;
+    }
+
+
+
+    public String getResult() {
+        return result;
+    }
+
+
+
+    public void setResult(String result) {
+        this.result = result;
+    }
+
+
+
+    public Node getReceivedBy() {
+        return receivedBy;
+    }
+
+
+
+    public void setReceivedBy(Node receivedBy) {
+        this.receivedBy = receivedBy;
+    }
+
+
     
-    private boolean verifySignature(String expectedSender) {
-        return getSender().equals(expectedSender);
-    }
-    
-    public String getTestcase() {
-        return "Sample-Test-case";
-    }
 
     
 
