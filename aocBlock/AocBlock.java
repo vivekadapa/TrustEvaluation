@@ -1,12 +1,9 @@
-import java.util.ArrayList;
-// import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 public class AocBlock {
 
     public static void main(String[] args) {
         int[][] matrix = {
-
                 { 0, 1, 0, 1, 0 },
                 { 1, 0, 1, 0, 0 },
                 { 1, 0, 0, 0, 0 },
@@ -61,10 +58,72 @@ public class AocBlock {
             }
         }
 
-        System.out.println("EnvelopeType" + "  " + "Sent By" + "   " + "Sent To" + "   " + "   " + "Envelope Id");
+        System.out.println("EnvelopeType" + "  " + "Sent By" + "   " + "Sent To" + "   ");
         for (int i = 0; i < Envnn1.size(); i++) {
             System.out.println(Envnn1.get(i).getType() + "            " + Envnn1.get(i).getSentBy().getNodeId()
                     + "       " + Envnn1.get(i).getReceivedBy().getNodeId());
         }
+
+        Scanner sc = new Scanner(System.in);
+
+        ArrayList<Envelope> ChallengeEnvelopes = new ArrayList<>();
+        System.out.println("Challenge Envelopes:");
+        for (int i = 1; i < nodeList.size(); i++) {
+            System.out.println("Does " + nodeList.get(i).getNodeId() + " wants to challenge the result");
+            Boolean n = sc.nextBoolean();
+            if (n) {
+                String id = EnvelopeType.envch.toString() + nodeList.get(i).getNodeId() + nodeList.get(0).getNodeId();
+                Envelope newEnvelope = new Envelope(EnvelopeType.envch, id, nodeList.get(i), nodeList.get(0));
+                ChallengeEnvelopes.add(newEnvelope);
+            }
+        }
+
+        System.out.println("EnvelopeType" + "  " + "Sent By" + "   " + "Sent To" + "   ");
+        for (int i = 0; i < ChallengeEnvelopes.size(); i++) {
+            System.out.println(ChallengeEnvelopes.get(i).getType() + "            "
+                    + ChallengeEnvelopes.get(i).getSentBy().getNodeId()
+                    + "       " + ChallengeEnvelopes.get(i).getReceivedBy().getNodeId());
+        }
+
+        ArrayList<Envelope> proofEnvelopes = new ArrayList<>();
+        System.out.println("Envelope of Proofs");
+        for (int i = 0; i < ChallengeEnvelopes.size(); i++) {
+            String id = EnvelopeType.envpr.toString() + nodeList.get(0).getNodeId()
+                    + ChallengeEnvelopes.get(i).getSentBy().getNodeId();
+            Envelope newEnvelope = new Envelope(EnvelopeType.envpr, id, nodeList.get(0),
+                    ChallengeEnvelopes.get(i).getSentBy());
+            proofEnvelopes.add(newEnvelope);
+        }
+
+        System.out.println("EnvelopeType" + "  " + "Sent By" + "   " + "Sent To" + "   ");
+        for (int i = 0; i < proofEnvelopes.size(); i++) {
+            System.out.println(proofEnvelopes.get(i).getType() + "            "
+                    + proofEnvelopes.get(i).getSentBy().getNodeId()
+                    + "       " + proofEnvelopes.get(i).getReceivedBy().getNodeId());
+        }
+
+        ArrayList<Envelope> negativelyVerifiedList = new ArrayList<>();
+
+        for (int i = 0; i < proofEnvelopes.size(); i++) {
+            String id = EnvelopeType.envvt.toString() + proofEnvelopes.get(i).getReceivedBy().getNodeId()
+                    + proofEnvelopes.get(i).getSentBy().getNodeId();
+            Envelope newEnvelope = new Envelope(EnvelopeType.envvt, id, proofEnvelopes.get(i).getReceivedBy(),
+                    proofEnvelopes.get(i).getSentBy());
+            System.out.println("Does " + proofEnvelopes.get(i).getReceivedBy().getNodeId()
+                    + " want to negatively verify the proof:");
+            Boolean n = sc.nextBoolean();
+            if (n) {
+                negativelyVerifiedList.add(newEnvelope);
+            }
+        }
+
+        System.out.println("EnvelopeType" + "  " + "Sent By" + "   " + "Sent To" + "   ");
+        for (int i = 0; i < negativelyVerifiedList.size(); i++) {
+            System.out.println(negativelyVerifiedList.get(i).getType() + "            "
+                    + negativelyVerifiedList.get(i).getSentBy().getNodeId()
+                    + "       " + negativelyVerifiedList.get(i).getReceivedBy().getNodeId());
+        }
+        sc.close();
+
     }
 }
