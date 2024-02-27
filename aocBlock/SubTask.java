@@ -1,55 +1,49 @@
-public class SubTask extends Task {
-    private String subTaskId;
-    private String preId;
-    private String postId;
-    private int timeToComplete;
-    private Node assignedNode;
-  
-    
+// import java.time.Instant;
 
-    public SubTask(String taskId, int numberOfSubtasks, Node assignedNearbyNode, String subTaskId, String preId,
-            String postId, int timeToComplete, Node assignedNode) {
-        super(taskId, numberOfSubtasks, assignedNearbyNode);
+public class SubTask {
+
+    private String subTaskId;
+    private long timeliness;
+    private Node assignedTo;
+    private Node assignedBy;
+
+    public SubTask(String subTaskId, long timeliness, Node assignedTo, Node assignedBy) {
         this.subTaskId = subTaskId;
-        this.preId = preId;
-        this.postId = postId;
-        this.timeToComplete = timeToComplete;
-        this.assignedNode = assignedNode;
+        this.timeliness = timeliness;
+        this.assignedTo = assignedTo;
+        this.assignedBy = assignedBy;
     }
-    
+
     public String getSubTaskId() {
         return subTaskId;
     }
+
     public void setSubTaskId(String subTaskId) {
         this.subTaskId = subTaskId;
     }
-    public String getPreId() {
-        return preId;
-    }
-    public void setPreId(String preId) {
-        this.preId = preId;
-    }
-    public String getPostId() {
-        return postId;
-    }
-    public void setPostId(String postId) {
-        this.postId = postId;
-    }
-    public int getTimeToComplete() {
-        return timeToComplete;
-    }
-    public void setTimeToComplete(int timeToComplete) {
-        this.timeToComplete = timeToComplete;
-    }
-    public Node getAssignedNode() {
-        return assignedNode;
-    }
-    public void setAssignedNode(Node assignedNode) {
-        this.assignedNode = assignedNode;
+
+    public long getTimeliness() {
+        return timeliness;
     }
 
+    public void setTimeliness(long timeliness) {
+        this.timeliness = timeliness;
+    }
 
-    
+    public Node getAssignedTo() {
+        return assignedTo;
+    }
 
+    public void setAssignedTo(Node assignedTo) {
+        this.assignedTo = assignedTo;
+    }
+
+    public Node getAssignedBy() {
+        return assignedBy;
+    }
+
+    public void setAssignedBy(Node assignedBy) {
+        this.assignedBy = assignedBy;
+    }
 
 }
