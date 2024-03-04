@@ -1,3 +1,5 @@
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 
@@ -15,14 +17,25 @@ public class Node {
     private PrivateKey privateKey;
     private PublicKey publicKey;
 
-
     public Node(String nodeId, NodeType nodeType, Trust trustScore, int amount) {
         this.nodeId = nodeId;
         this.nodeType = nodeType;
         this.trustScore = trustScore;
         this.amount = amount;
+        generateKeyPair();
     }
 
+    private void generateKeyPair() {
+        try {
+            KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+            keyPairGenerator.initialize(2048);
+            KeyPair keyPair = keyPairGenerator.generateKeyPair();
+            this.privateKey = keyPair.getPrivate();
+            this.publicKey = keyPair.getPublic();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     public Node(String nodeId, NodeType nodeType, Trust trustScore, int amount, PrivateKey privateKey,
             PublicKey publicKey) {
@@ -33,7 +46,6 @@ public class Node {
         this.privateKey = privateKey;
         this.publicKey = publicKey;
     }
-
 
     public PrivateKey getPrivateKey() {
         return privateKey;
@@ -110,6 +122,20 @@ public class Node {
     public int giveAmount(int amount) {
         this.amount = this.amount + amount;
         return this.amount;
+    }
+
+    public String toString() {
+        return "\n{\nNode Id:" + this.nodeId + "\n" + "Node Type: " + this.nodeType + "\n}\n";
+
+    }
+
+    public static void main(String[] args) {
+        Node node = new Node("node1", NodeType.nn, null, 100);
+        PrivateKey privateKey = node.getPrivateKey();
+        PublicKey publicKey = node.getPublicKey();
+
+        System.out.println(privateKey);
+        System.out.println(publicKey);
     }
 
 }
