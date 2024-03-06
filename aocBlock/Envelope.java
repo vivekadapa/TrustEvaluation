@@ -111,13 +111,13 @@ public class Envelope {
         }
     }
 
-    private static String bytesToHex(byte[] bytes) {
-        StringBuilder hexString = new StringBuilder(2 * bytes.length);
-        for (byte b : bytes) {
-            hexString.append(String.format("%02x", b));
-        }
-        return hexString.toString();
-    }
+    // private static String bytesToHex(byte[] bytes) {
+    //     StringBuilder hexString = new StringBuilder(2 * bytes.length);
+    //     for (byte b : bytes) {
+    //         hexString.append(String.format("%02x", b));
+    //     }
+    //     return hexString.toString();
+    // }
 
     public static Envelope releaseSubTask(Node nearbyEdgeNode, Node cooperativeEdgeNode, SubTask subtask) {
         String nearbyEdgeNodeSecretKey = "afjasDJKSJHAWjeweqWEQ";
@@ -128,7 +128,7 @@ public class Envelope {
         String base64Signature = Base64.getEncoder().encodeToString(signature);
         System.out.println("Signature of the envelope:" + base64Signature);
         return new Envelope(EnvelopeType.envrv, generateEnvId(), nearbyEdgeNode, cooperativeEdgeNode, subtask,
-                bytesToHex(signature));
+                base64Signature);
     }
 
     private static String generateEnvelopeContent(Node nearbyEdgeNode, Node cooperativeEdgeNode, SubTask subtask) {

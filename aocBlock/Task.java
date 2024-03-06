@@ -1,12 +1,12 @@
-
+import java.util.ArrayList;
 
 public class Task {
     private String taskId;
-    private SubTask[] subtasks;
+    private ArrayList<SubTask> subtasks;
     private Node assignedNearbyNode;
  
 
-    public Task(String taskId, SubTask[] subtasks, Node assignedNearbyNode) {
+    public Task(String taskId, ArrayList<SubTask> subtasks, Node assignedNearbyNode) {
         this.taskId = taskId;
         this.subtasks = subtasks;
         this.assignedNearbyNode = assignedNearbyNode;
@@ -20,11 +20,11 @@ public class Task {
         this.taskId = taskId;
     }
 
-    public SubTask[] getSubtasks() {
+    public ArrayList<SubTask> getSubtasks() {
         return subtasks;
     }
 
-    public void setSubtasks(SubTask[] subtasks) {
+    public void setSubtasks(ArrayList<SubTask> subtasks) {
         this.subtasks = subtasks;
     }
 

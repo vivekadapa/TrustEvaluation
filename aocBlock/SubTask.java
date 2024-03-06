@@ -46,4 +46,9 @@ public class SubTask {
         this.assignedBy = assignedBy;
     }
 
+    public String toString() {
+        return "SubTaskId: " + this.subTaskId + "\nAssigned By: " + this.getAssignedBy() + "\nAssgined To: "
+                + this.getAssignedTo();
+    }
+
 }

@@ -11,11 +11,11 @@ public class AocBlock {
         public static void main(String[] args) {
 
                 int[][] matrix = {
-                                { 0, 1, 0, 1, 0 },
-                                { 1, 0, 1, 0, 0 },
-                                { 1, 0, 0, 0, 0 },
-                                { 0, 1, 0, 0, 1 },
-                                { 1, 0, 0, 0, 0 }
+                        { 0, 1, 0, 1, 0 },
+                        { 1, 0, 1, 0, 0 },
+                        { 1, 0, 0, 0, 0 },
+                        { 0, 1, 0, 0, 1 },
+                        { 1, 0, 0, 0, 0 }
                 };
 
                 Trust scoreOfNN1 = new Trust(1, 1, 0, 0, 0, 0);
@@ -37,9 +37,11 @@ public class AocBlock {
                 aocBlock.nodeList.add(cn3);
                 aocBlock.nodeList.add(cn4);
 
-                List<Envelope> Envnn1 = new ArrayList<>();
+                ArrayList<SubTask> subtasks = new ArrayList<>();
+                Task T1 = new Task("t1", subtasks, nn1);
+                List<Envelope> envOfExectionAndVerification = new ArrayList<>();
 
-                System.out.println("Relased Subtasks:");
+                System.out.println("Released Subtasks:");
 
                 for (int i = 0; i < matrix.length; i++) {
                         for (int j = 1; j < matrix.length; j++) {
@@ -49,12 +51,17 @@ public class AocBlock {
                                         // System.out.println(senderNode.getPublicKey());
                                         SubTask subtask = new SubTask(senderNode.getNodeId() + receiverNode.getNodeId(),
                                                         100, receiverNode, senderNode);
+                                        subtasks.add(subtask);
                                         Envelope envelope = Envelope.releaseSubTask(senderNode, receiverNode, subtask);
-                                        System.out.println(envelope);
-                                        Envnn1.add(envelope);
+                                        // System.out.println(envelope);
+                                        envOfExectionAndVerification.add(envelope);
                                 }
                         }
                 }
+
+                System.out.println(envOfExectionAndVerification);
+
+                // System.out.println(T1.getSubtasks().toString());
 
                 // for (int i = 0; i < matrix.length; i++) {
                 // for (int j = 0; j < matrix.length; j++) {
