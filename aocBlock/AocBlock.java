@@ -1,8 +1,12 @@
 import java.util.*;
 
+import org.w3c.dom.NodeList;
+
 public class AocBlock {
 
         private List<Node> nodeList;
+        private List<Envelope> SubtaskEnvelopes;
+        private List<Envelope> SubtaskResultEnvelopes;
 
         public AocBlock(List<Node> nodeList) {
                 this.nodeList = nodeList;
@@ -11,11 +15,11 @@ public class AocBlock {
         public static void main(String[] args) {
 
                 int[][] matrix = {
-                        { 0, 1, 0, 1, 0 },
-                        { 1, 0, 1, 0, 0 },
-                        { 1, 0, 0, 0, 0 },
-                        { 0, 1, 0, 0, 1 },
-                        { 1, 0, 0, 0, 0 }
+                                { 0, 1, 0, 1, 0 },
+                                { 1, 0, 1, 0, 0 },
+                                { 1, 0, 0, 0, 0 },
+                                { 0, 1, 0, 0, 1 },
+                                { 1, 0, 0, 0, 0 }
                 };
 
                 Trust scoreOfNN1 = new Trust(1, 1, 0, 0, 0, 0);
@@ -43,23 +47,96 @@ public class AocBlock {
 
                 System.out.println("Released Subtasks:");
 
-                for (int i = 0; i < matrix.length; i++) {
-                        for (int j = 1; j < matrix.length; j++) {
-                                if (matrix[i][j] == 1) {
-                                        Node senderNode = aocBlock.nodeList.get(0);
-                                        Node receiverNode = aocBlock.nodeList.get(j);
-                                        // System.out.println(senderNode.getPublicKey());
-                                        SubTask subtask = new SubTask(senderNode.getNodeId() + receiverNode.getNodeId(),
-                                                        100, receiverNode, senderNode);
-                                        subtasks.add(subtask);
-                                        Envelope envelope = Envelope.releaseSubTask(senderNode, receiverNode, subtask);
-                                        // System.out.println(envelope);
-                                        envOfExectionAndVerification.add(envelope);
-                                }
+                for (int j = 1; j < matrix.length; j++) {
+                        if (matrix[0][j] == 1) {
+                                Node senderNode = aocBlock.nodeList.get(0);
+                                Node receiverNode = aocBlock.nodeList.get(j);
+                                SubTask subtask = new SubTask(senderNode.getNodeId() + receiverNode.getNodeId(),
+                                                100, receiverNode, senderNode);
+                                subtasks.add(subtask);
+                                Envelope envelope = Envelope.releaseSubTask(senderNode, receiverNode, subtask);
+                                envOfExectionAndVerification.add(envelope);
                         }
                 }
 
-                System.out.println(envOfExectionAndVerification);
+                // System.out.println(envOfExectionAndVerification);
+
+                List<Envelope> envOfSubTaskComputResult = new ArrayList<>();
+
+                for (int i = 0; i < envOfExectionAndVerification.size(); i++) {
+                        Node sentBy = envOfExectionAndVerification.get(i).getReceivedBy();
+                        Node receivedBy = envOfExectionAndVerification.get(i).getSentBy();
+                        Envelope subtaskResultEnvelope = new Envelope(EnvelopeType.envcs, "", sentBy, receivedBy);
+                        envOfSubTaskComputResult.add(subtaskResultEnvelope);
+                }
+
+                // System.out.println(envOfSubTaskComputResult);
+
+                List<Envelope> envOfExectionAndVerification1 = new ArrayList<>();
+                for (int i = 1; i < matrix.length; i++) {
+                        for (int j = 1; j < matrix.length; j++) {
+                                if (matrix[i][j] == 1) {
+                                        Node receiver = aocBlock.nodeList.get(j);
+                                        Node sender = aocBlock.nodeList.get(0);
+                                        SubTask subtask = new SubTask(sender.getNodeId() + receiver.getNodeId(),
+                                                        100, receiver, sender);
+                                        subtasks.add(subtask);
+                                        Envelope envelope = Envelope.releaseSubTask(sender, receiver, subtask);
+                                        envOfExectionAndVerification1.add(envelope);
+                                }
+                        }
+                }
+                // System.out.println(envOfExectionAndVerification1);
+                envOfExectionAndVerification.addAll(envOfExectionAndVerification1);
+
+                // System.out.println(envOfExectionAndVerification);
+
+                for (int i = 0; i < envOfExectionAndVerification1.size(); i++) {
+                        Node sentBy = envOfExectionAndVerification1.get(i).getReceivedBy();
+                        Node receivedBy = envOfExectionAndVerification1.get(i).getSentBy();
+                        Envelope subtaskResultEnvelope = new Envelope(EnvelopeType.envcs, "", sentBy, receivedBy);
+                        envOfSubTaskComputResult.add(subtaskResultEnvelope);
+                }
+                System.out.println(envOfSubTaskComputResult);
+
+                aocBlock.SubtaskEnvelopes = envOfExectionAndVerification;
+                aocBlock.SubtaskResultEnvelopes = envOfSubTaskComputResult;
+
+                Envelope commitmentEnvelope = new Envelope(EnvelopeType.envcm, "", nn1, cn1);
+
+                Scanner sc = new Scanner(System.in);
+
+                ArrayList<Envelope> challengeEnvelopes = new ArrayList<>();
+                for (int i = 1; i < aocBlock.nodeList.size(); i++) {
+                        System.out.println("Does " + aocBlock.nodeList.get(i).getNodeId()
+                                        + " want to challenge the result");
+                        Boolean bool = sc.nextBoolean();
+                        if (bool == true) {
+                                Envelope envelope = new Envelope(EnvelopeType.envch, "", aocBlock.nodeList.get(i),
+                                                aocBlock.nodeList.get(0));
+                                challengeEnvelopes.add(envelope);
+                        }
+                }
+
+                ArrayList<Envelope> proofEnvelopes = new ArrayList<>();
+                for (int i = 0; i < challengeEnvelopes.size(); i++) {
+                        Envelope envelope = new Envelope(EnvelopeType.envpr, "", aocBlock.nodeList.get(i),
+                                        challengeEnvelopes.get(i).getSentBy());
+                        proofEnvelopes.add(envelope);
+                }
+
+                ArrayList<Envelope> negativeVerificationEnvelopes = new ArrayList<>();
+
+                for (int i = 0; i < proofEnvelopes.size(); i++) {
+                        System.out.println("Does " + proofEnvelopes.get(i).getReceivedBy().getNodeId()
+                                        + " want to negatively verify the proof");
+                        Boolean bool = sc.nextBoolean();
+                        if (bool == true) {
+                                Envelope envelope = new Envelope(EnvelopeType.envvt, "", aocBlock.nodeList.get(i),
+                                                aocBlock.nodeList.get(0));
+                                negativeVerificationEnvelopes.add(envelope);
+                        }
+                }
 
                 // System.out.println(T1.getSubtasks().toString());
 
@@ -77,8 +154,9 @@ public class AocBlock {
                 // null);
 
                 // Envnn1.add(e1);
-                // } else if (matrix[i][j] == 1 && j != 0) { // For directed edges
-                // fromcooperative Edge Nodes except when
+                // }
+                // else if (matrix[i][j] == 1 && j != 0) { // For directed edges from
+                // cooperative Edge Nodes except when
                 // // the reciever edge node is nn14
                 // String envId1 = aocBlock.nodeList.get(i).getNodeId() +
                 // aocBlock.nodeList.get(0).getNodeId();

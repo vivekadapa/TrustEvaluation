@@ -18,30 +18,30 @@ public class Envelope {
     private Node sentBy;
     private Node receivedBy;
     private SubTask subtask;
-    private String result;
+    private String Signature;
 
-    public Envelope(EnvelopeType type, String envId, Node sentBy, SubTask subtask, String result) {
+    public Envelope(EnvelopeType type, String envId, Node sentBy, SubTask subtask, String Signature) {
         this.type = type;
         this.envId = envId;
         this.sentBy = sentBy;
         this.subtask = subtask;
-        this.result = result;
+        this.Signature = Signature;
     }
 
     public Envelope(EnvelopeType type, String envId, Node sentBy, Node receivedBy) {
         this.type = type;
-        this.envId = envId;
+        this.envId = generateEnvId();
         this.sentBy = sentBy;
         this.receivedBy = receivedBy;
     }
 
-    public Envelope(EnvelopeType type, String envId, Node sentBy, Node receivedBy, SubTask subtask, String result) {
+    public Envelope(EnvelopeType type, String envId, Node sentBy, Node receivedBy, SubTask subtask, String Signature) {
         this.type = type;
         this.envId = envId;
         this.sentBy = sentBy;
         this.receivedBy = receivedBy;
         this.subtask = subtask;
-        this.result = result;
+        this.Signature = Signature;
     }
 
     public EnvelopeType getType() {
@@ -76,12 +76,12 @@ public class Envelope {
         this.subtask = subtask;
     }
 
-    public String getResult() {
-        return result;
+    public String getSignature() {
+        return Signature;
     }
 
-    public void setResult(String result) {
-        this.result = result;
+    public void setSignature(String Signature) {
+        this.Signature = Signature;
     }
 
     public Node getReceivedBy() {
@@ -112,11 +112,11 @@ public class Envelope {
     }
 
     // private static String bytesToHex(byte[] bytes) {
-    //     StringBuilder hexString = new StringBuilder(2 * bytes.length);
-    //     for (byte b : bytes) {
-    //         hexString.append(String.format("%02x", b));
-    //     }
-    //     return hexString.toString();
+    // StringBuilder hexString = new StringBuilder(2 * bytes.length);
+    // for (byte b : bytes) {
+    // hexString.append(String.format("%02x", b));
+    // }
+    // return hexString.toString();
     // }
 
     public static Envelope releaseSubTask(Node nearbyEdgeNode, Node cooperativeEdgeNode, SubTask subtask) {
@@ -126,10 +126,14 @@ public class Envelope {
         byte[] signature = generateSignature(nearbyEdgeNodeSecretKey, envelopeContent,
                 cooperativeEdgeNode.getPublicKey(), "example", "yvalue", "function");
         String base64Signature = Base64.getEncoder().encodeToString(signature);
-        System.out.println("Signature of the envelope:" + base64Signature);
+        // System.out.println("Signature of the envelope:" + base64Signature);
         return new Envelope(EnvelopeType.envrv, generateEnvId(), nearbyEdgeNode, cooperativeEdgeNode, subtask,
                 base64Signature);
     }
+
+    // public static Envelope broadCastResultOfSubTask(){
+
+    // }
 
     private static String generateEnvelopeContent(Node nearbyEdgeNode, Node cooperativeEdgeNode, SubTask subtask) {
         String subTaskString = subtask.toString();
@@ -141,8 +145,9 @@ public class Envelope {
     }
 
     public String toString() {
-        return "Envelope Type: " + this.type + ",Envelope Id: " + this.envId + "\nEnvelope SentBy: " + this.sentBy
-                + "Envelope Sent to:" + this.receivedBy;
+        return "\nEnvelope Signature: " + this.Signature + "\nEnvelope Type: " + this.type + ",Envelope Id: " + this.envId
+                + "\nEnvelope SentBy: " + this.sentBy
+                + " Envelope Sent to:" + this.receivedBy;
     }
 
 }
