@@ -1,19 +1,31 @@
 import java.util.*;
 
-import org.w3c.dom.NodeList;
-
 public class AocBlock {
 
         private List<Node> nodeList;
-        private List<Envelope> SubtaskEnvelopes;
-        private List<Envelope> SubtaskResultEnvelopes;
+        private HashMap<Envelope, Envelope> DAG;
 
         public AocBlock(List<Node> nodeList) {
                 this.nodeList = nodeList;
         }
 
-        public static void main(String[] args) {
+        public List<Node> getNodeList() {
+                return nodeList;
+        }
 
+        public void setNodeList(List<Node> nodeList) {
+                this.nodeList = nodeList;
+        }
+
+        public HashMap<Envelope, Envelope> getDAG() {
+                return DAG;
+        }
+
+        public void setDAG(HashMap<Envelope, Envelope> dag) {
+                DAG = dag;
+        }
+
+        public AocBlock blockGeneration() {
                 int[][] matrix = {
                                 { 0, 1, 0, 1, 0 },
                                 { 1, 0, 1, 0, 0 },
@@ -42,11 +54,10 @@ public class AocBlock {
                 aocBlock.nodeList.add(cn4);
 
                 ArrayList<SubTask> subtasks = new ArrayList<>();
-                Task T1 = new Task("t1", subtasks, nn1);
+                // Task T1 = new Task("t1", subtasks, nn1);
                 List<Envelope> envOfExectionAndVerification = new ArrayList<>();
 
-                System.out.println("Released Subtasks:");
-
+                LinkedHashMap<Envelope, Envelope> DAG = new LinkedHashMap<>();
                 for (int j = 1; j < matrix.length; j++) {
                         if (matrix[0][j] == 1) {
                                 Node senderNode = aocBlock.nodeList.get(0);
@@ -55,21 +66,24 @@ public class AocBlock {
                                                 100, receiverNode, senderNode);
                                 subtasks.add(subtask);
                                 Envelope envelope = Envelope.releaseSubTask(senderNode, receiverNode, subtask);
-                                envOfExectionAndVerification.add(envelope);
+                                DAG.put(envelope, null);
                         }
                 }
 
+                // System.out.println("This is a DAG " + DAG);
+
+                // aocBlock.SubtaskEnvelopes = envOfExectionAndVerification;
                 // System.out.println(envOfExectionAndVerification);
 
-                List<Envelope> envOfSubTaskComputResult = new ArrayList<>();
-
-                for (int i = 0; i < envOfExectionAndVerification.size(); i++) {
-                        Node sentBy = envOfExectionAndVerification.get(i).getReceivedBy();
-                        Node receivedBy = envOfExectionAndVerification.get(i).getSentBy();
-                        Envelope subtaskResultEnvelope = new Envelope(EnvelopeType.envcs, "", sentBy, receivedBy);
-                        envOfSubTaskComputResult.add(subtaskResultEnvelope);
+                // List<Envelope> envOfSubTaskComputResult = new ArrayList<>();
+                for (Map.Entry<Envelope, Envelope> entry : new LinkedHashMap<>(DAG).entrySet()) {
+                        Envelope e = entry.getKey();
+                        Node sentBy = e.getReceivedBy();
+                        Node receivedBy = e.getSentBy();
+                        Envelope subtaskResultEnvelope = new Envelope(EnvelopeType.envcs, sentBy, receivedBy);
+                        DAG.put(subtaskResultEnvelope, entry.getKey());
                 }
-
+                // aocBlock.SubtaskResultEnvelopes = envOfSubTaskComputResult;
                 // System.out.println(envOfSubTaskComputResult);
 
                 List<Envelope> envOfExectionAndVerification1 = new ArrayList<>();
@@ -83,27 +97,40 @@ public class AocBlock {
                                         subtasks.add(subtask);
                                         Envelope envelope = Envelope.releaseSubTask(sender, receiver, subtask);
                                         envOfExectionAndVerification1.add(envelope);
+                                        for (Map.Entry<Envelope, Envelope> entry : new LinkedHashMap<>(DAG)
+                                                        .entrySet()) {
+                                                Envelope e = entry.getKey();
+                                                Node sentBy = e.getSentBy();
+                                                if (sentBy == nodeList.get(i) && e.getType() == EnvelopeType.envcs) {
+                                                        DAG.put(envelope, entry.getKey());
+                                                }
+                                        }
                                 }
                         }
                 }
+                // System.out.println("This is a DAG " + DAG);
+
                 // System.out.println(envOfExectionAndVerification1);
                 envOfExectionAndVerification.addAll(envOfExectionAndVerification1);
-
+                // aocBlock.SubtaskEnvelopes = envOfExectionAndVerification;
                 // System.out.println(envOfExectionAndVerification);
 
+                ArrayList<Envelope> resultEnvelopes = new ArrayList<>();
                 for (int i = 0; i < envOfExectionAndVerification1.size(); i++) {
                         Node sentBy = envOfExectionAndVerification1.get(i).getReceivedBy();
                         Node receivedBy = envOfExectionAndVerification1.get(i).getSentBy();
-                        Envelope subtaskResultEnvelope = new Envelope(EnvelopeType.envcs, "", sentBy, receivedBy);
-                        envOfSubTaskComputResult.add(subtaskResultEnvelope);
+                        Envelope subtaskResultEnvelope = new Envelope(EnvelopeType.envcs, sentBy, receivedBy);
+                        resultEnvelopes.add(subtaskResultEnvelope);
+                        for (Map.Entry<Envelope, Envelope> entry : new LinkedHashMap<>(DAG).entrySet()) {
+                                if (entry.getKey() == envOfExectionAndVerification1.get(i)) {
+                                        DAG.put(subtaskResultEnvelope, entry.getKey());
+                                }
+                        }
                 }
-                System.out.println(envOfSubTaskComputResult);
 
-                aocBlock.SubtaskEnvelopes = envOfExectionAndVerification;
-                aocBlock.SubtaskResultEnvelopes = envOfSubTaskComputResult;
-
-                Envelope commitmentEnvelope = new Envelope(EnvelopeType.envcm, "", nn1, cn1);
-
+                Envelope commitmentEnvelope = new Envelope(EnvelopeType.envcm, nn1, null);
+                DAG.put(commitmentEnvelope, null);
+                // System.out.println(DAG);
                 Scanner sc = new Scanner(System.in);
 
                 ArrayList<Envelope> challengeEnvelopes = new ArrayList<>();
@@ -112,31 +139,62 @@ public class AocBlock {
                                         + " want to challenge the result");
                         Boolean bool = sc.nextBoolean();
                         if (bool == true) {
-                                Envelope envelope = new Envelope(EnvelopeType.envch, "", aocBlock.nodeList.get(i),
+                                Envelope envelope = new Envelope(EnvelopeType.envch, aocBlock.nodeList.get(i),
                                                 aocBlock.nodeList.get(0));
                                 challengeEnvelopes.add(envelope);
+                                DAG.put(envelope, commitmentEnvelope);
                         }
                 }
 
                 ArrayList<Envelope> proofEnvelopes = new ArrayList<>();
                 for (int i = 0; i < challengeEnvelopes.size(); i++) {
-                        Envelope envelope = new Envelope(EnvelopeType.envpr, "", aocBlock.nodeList.get(i),
+                        Envelope envelope = new Envelope(EnvelopeType.envpr, aocBlock.nodeList.get(0),
                                         challengeEnvelopes.get(i).getSentBy());
+                        for (Map.Entry<Envelope, Envelope> entry : new LinkedHashMap<>(DAG).entrySet()) {
+                                if (entry.getKey().getType() == EnvelopeType.envch) {
+                                        DAG.put(envelope, entry.getKey());
+                                }
+                        }
                         proofEnvelopes.add(envelope);
                 }
 
-                ArrayList<Envelope> negativeVerificationEnvelopes = new ArrayList<>();
+                // ArrayList<Envelope> negativeVerificationEnvelopes = new ArrayList<>();
 
                 for (int i = 0; i < proofEnvelopes.size(); i++) {
                         System.out.println("Does " + proofEnvelopes.get(i).getReceivedBy().getNodeId()
                                         + " want to negatively verify the proof");
                         Boolean bool = sc.nextBoolean();
                         if (bool == true) {
-                                Envelope envelope = new Envelope(EnvelopeType.envvt, "", aocBlock.nodeList.get(i),
+                                Envelope envelope = new Envelope(EnvelopeType.envvt, aocBlock.nodeList.get(i),
                                                 aocBlock.nodeList.get(0));
-                                negativeVerificationEnvelopes.add(envelope);
+                                for (Map.Entry<Envelope, Envelope> entry : new LinkedHashMap<>(DAG).entrySet()) {
+                                        if (entry.getKey().getType() == EnvelopeType.envpr
+                                                        && entry.getKey().getReceivedBy() == envelope.getSentBy()) {
+                                                DAG.put(envelope, entry.getKey());
+                                        }
+                                }
                         }
                 }
+
+                // System.out.println(DAG.size());
+                // System.out.println(DAG);
+
+                aocBlock.DAG = DAG;
+
+                sc.close();
+
+                return aocBlock;
+        }
+
+        //public static void main(String[] args) {
+
+                // aocBlock.NegativeVerificationEnvelopes = negativeVerificationEnvelopes;
+
+                // System.out.println(negativeVerificationEnvelopes.toString());
+
+                // Envelope envcm = new Envelope(EnvelopeType.envcm, nn1, cn1);
+                // System.out.println(envcm);
+                // aocBlock.commitmentOfResult = envcm;
 
                 // System.out.println(T1.getSubtasks().toString());
 
@@ -306,5 +364,5 @@ public class AocBlock {
                 // System.out.println("Trust Score of cn2 " + scoreOfCN2.calculateTrustScore());
                 // System.out.println("Trust Score of cn3 " + scoreOfCN3.calculateTrustScore());
                 // System.out.println("Trust Score of cn4 " + scoreOfCN4.calculateTrustScore());
-        }
+        //}
 }

@@ -124,9 +124,12 @@ public class Node {
         return this.amount;
     }
 
-    public String toString() {
-        return "\n{\nNode Id:" + this.nodeId + "\n" + "Node Type: " + this.nodeType + "\n}\n";
+    // public String toString() {
+    //     return "\n{\nNode Id:" + this.nodeId + "\n" + "Node Type: " + this.nodeType + "\n}\n";
 
+    // }
+    public String toString(){
+        return " " + this.nodeId;
     }
 
     public static void main(String[] args) {

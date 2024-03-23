@@ -20,24 +20,26 @@ public class Envelope {
     private SubTask subtask;
     private String Signature;
 
-    public Envelope(EnvelopeType type, String envId, Node sentBy, SubTask subtask, String Signature) {
+    public Envelope(EnvelopeType type, Node sentBy, SubTask subtask, String Signature) {
         this.type = type;
-        this.envId = envId;
+        this.envId = generateEnvId();
         this.sentBy = sentBy;
         this.subtask = subtask;
         this.Signature = Signature;
     }
 
-    public Envelope(EnvelopeType type, String envId, Node sentBy, Node receivedBy) {
+    public Envelope(EnvelopeType type, Node sentBy, Node receivedBy) {
         this.type = type;
         this.envId = generateEnvId();
         this.sentBy = sentBy;
         this.receivedBy = receivedBy;
+        byte signature[] = generateSignature("weqweqeqwrqw", "Signature", sentBy.getPublicKey(), "t1", "y1", "f1");
+        this.Signature = Base64.getEncoder().encodeToString(signature);
     }
 
-    public Envelope(EnvelopeType type, String envId, Node sentBy, Node receivedBy, SubTask subtask, String Signature) {
+    public Envelope(EnvelopeType type, Node sentBy, Node receivedBy, SubTask subtask, String Signature) {
         this.type = type;
-        this.envId = envId;
+        this.envId = generateEnvId();
         this.sentBy = sentBy;
         this.receivedBy = receivedBy;
         this.subtask = subtask;
@@ -103,7 +105,6 @@ public class Envelope {
 
             String dataToSign = e + publicKey.toString() + t1 + y_s1 + f1;
             byte[] hash = sha256_HMAC.doFinal(dataToSign.getBytes(StandardCharsets.UTF_8));
-
             return Base64.getEncoder().encode(hash);
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -127,7 +128,7 @@ public class Envelope {
                 cooperativeEdgeNode.getPublicKey(), "example", "yvalue", "function");
         String base64Signature = Base64.getEncoder().encodeToString(signature);
         // System.out.println("Signature of the envelope:" + base64Signature);
-        return new Envelope(EnvelopeType.envrv, generateEnvId(), nearbyEdgeNode, cooperativeEdgeNode, subtask,
+        return new Envelope(EnvelopeType.envrv, nearbyEdgeNode, cooperativeEdgeNode, subtask,
                 base64Signature);
     }
 
@@ -145,9 +146,11 @@ public class Envelope {
     }
 
     public String toString() {
-        return "\nEnvelope Signature: " + this.Signature + "\nEnvelope Type: " + this.type + ",Envelope Id: " + this.envId
-                + "\nEnvelope SentBy: " + this.sentBy
-                + " Envelope Sent to:" + this.receivedBy;
+        // return "\nEnvelope Signature: " + this.Signature + "\nEnvelope Type: " + this.type + ",Envelope Id: "
+        //         + this.envId
+        //         + "\nEnvelope SentBy: " + this.sentBy
+        //         + " Envelope Sent to:" + this.receivedBy;
+        return "Envelope Type: " + this.type + "\nEnvelope SentBy: " + this.sentBy + "\nEnvelope Sent to: " + this.receivedBy + "\n";
     }
 
 }
