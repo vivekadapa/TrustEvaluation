@@ -29,13 +29,13 @@ public class Blockchain {
          }
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         ArrayList<AocBlock> chainList = new ArrayList<>();
         Blockchain blockchain = new Blockchain(chainList);
         AocBlock aocblock = new AocBlock(null);
         AocBlock block = aocblock.blockGeneration();
-        blockchain.addBlock(block);
-        blockchain.arbitrationAboutNegVerfication(block,"y1","f");
+        // blockchain.addBlock(block);
+        // blockchain.arbitrationAboutNegVerfication(block,"y1","f");
         // System.out.println(block.getDAG());
     }
 }

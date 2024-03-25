@@ -1,4 +1,13 @@
+import java.nio.charset.StandardCharsets;
+import java.security.PrivateKey;
 import java.util.*;
+// import java.util.function.DoubleFunction;
+import javax.crypto.Cipher;
+// import org.xml.sax.EntityResolver;
+
+interface StringFunction {
+        String run(String str);
+}
 
 public class AocBlock {
 
@@ -25,7 +34,13 @@ public class AocBlock {
                 DAG = dag;
         }
 
-        public AocBlock blockGeneration() {
+        private static byte[] decryptWithPrivateKey(byte[] input, PrivateKey privateKey) throws Exception {
+                Cipher cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-256AndMGF1Padding");
+                cipher.init(Cipher.DECRYPT_MODE, privateKey);
+                return cipher.doFinal(input);
+        }
+
+        public AocBlock blockGeneration() throws Exception {
                 int[][] matrix = {
                                 { 0, 1, 0, 1, 0 },
                                 { 1, 0, 1, 0, 0 },
@@ -55,9 +70,10 @@ public class AocBlock {
 
                 ArrayList<SubTask> subtasks = new ArrayList<>();
                 // Task T1 = new Task("t1", subtasks, nn1);
-                List<Envelope> envOfExectionAndVerification = new ArrayList<>();
+                // List<Envelope> envOfExectionAndVerification = new ArrayList<>();
 
                 LinkedHashMap<Envelope, Envelope> DAG = new LinkedHashMap<>();
+                int k = 0;
                 for (int j = 1; j < matrix.length; j++) {
                         if (matrix[0][j] == 1) {
                                 Node senderNode = aocBlock.nodeList.get(0);
@@ -65,304 +81,285 @@ public class AocBlock {
                                 SubTask subtask = new SubTask(senderNode.getNodeId() + receiverNode.getNodeId(),
                                                 100, receiverNode, senderNode);
                                 subtasks.add(subtask);
-                                Envelope envelope = Envelope.releaseSubTask(senderNode, receiverNode, subtask);
+                                String range = "";
+                                if (k == 0) {
+                                        range = "1-10";
+                                } else {
+                                        range = "11-20";
+                                }
+                                k++;
+                                Envelope envelope = Envelope.releaseSubTask(senderNode, receiverNode,
+                                                range, "sqrt");
                                 DAG.put(envelope, null);
                         }
                 }
 
-                // System.out.println("This is a DAG " + DAG);
-
-                // aocBlock.SubtaskEnvelopes = envOfExectionAndVerification;
-                // System.out.println(envOfExectionAndVerification);
-
-                // List<Envelope> envOfSubTaskComputResult = new ArrayList<>();
+                // System.out.println(DAG);
+                ArrayList<Envelope> subtaskEnvelopes = new ArrayList<>();
                 for (Map.Entry<Envelope, Envelope> entry : new LinkedHashMap<>(DAG).entrySet()) {
                         Envelope e = entry.getKey();
                         Node sentBy = e.getReceivedBy();
                         Node receivedBy = e.getSentBy();
-                        Envelope subtaskResultEnvelope = new Envelope(EnvelopeType.envcs, sentBy, receivedBy);
+                        byte[] decryptedY = decryptWithPrivateKey(e.getEncryptedY(), sentBy.getPrivateKey());
+                        byte[] decryptedF = decryptWithPrivateKey(e.getEncryptedF(), sentBy.getPrivateKey());
+                        String decryptedYmessage = new String(decryptedY, StandardCharsets.UTF_8);
+                        String decryptedFmessage = new String(decryptedF, StandardCharsets.UTF_8);
+                        double start = Double.parseDouble(decryptedYmessage.split("-")[0]);
+                        double end = Double.parseDouble(decryptedYmessage.split("-")[1]);
+                        ArrayList<Double> sAns = new ArrayList<>();
+                        if (decryptedFmessage.equals("sqrt")) {
+                                sAns.add(0, 0.0);
+                                for (double i = start; i <= end; i++) {
+                                        sAns.add(Math.sqrt(i));
+                                }
+                        }
+                        Envelope subtaskResultEnvelope = Envelope.subTaskResultEnvelope(sentBy, receivedBy,
+                                        sAns.toString(), e.getPrevHash());
+                        subtaskEnvelopes.add(subtaskResultEnvelope);
                         DAG.put(subtaskResultEnvelope, entry.getKey());
                 }
-                // aocBlock.SubtaskResultEnvelopes = envOfSubTaskComputResult;
-                // System.out.println(envOfSubTaskComputResult);
 
+                // for (Envelope e : DAG.keySet()) {
+                // if (e.getType() == EnvelopeType.envcs) {
+                // byte[] decryptedResult = decryptWithPrivateKey(e.getEncryptedResult(),
+                // e.getReceivedBy().getPrivateKey());
+                // String decryptedResultmessage = new String(decryptedResult,
+                // StandardCharsets.UTF_8);
+                // System.out.println(decryptedResultmessage);
+                // }
+                // }
+                k = 0;
                 List<Envelope> envOfExectionAndVerification1 = new ArrayList<>();
+                // ArrayList<Integer> numberOfOnesPerRow = new ArrayList<>();
+                int numberOfOnesPerRow[] = new int[matrix.length];
+                // Iterate over each row of the matrix
+                for (int i = 1; i < matrix.length; i++) {
+                        int count = 0;
+                        for (int j = 1; j < matrix[i].length; j++) {
+                                if (matrix[i][j] == 1) {
+                                        count++;
+                                }
+                        }
+                        numberOfOnesPerRow[i] = count;
+                }
+
                 for (int i = 1; i < matrix.length; i++) {
                         for (int j = 1; j < matrix.length; j++) {
                                 if (matrix[i][j] == 1) {
-                                        Node receiver = aocBlock.nodeList.get(j);
-                                        Node sender = aocBlock.nodeList.get(0);
-                                        SubTask subtask = new SubTask(sender.getNodeId() + receiver.getNodeId(),
-                                                        100, receiver, sender);
-                                        subtasks.add(subtask);
-                                        Envelope envelope = Envelope.releaseSubTask(sender, receiver, subtask);
-                                        envOfExectionAndVerification1.add(envelope);
-                                        for (Map.Entry<Envelope, Envelope> entry : new LinkedHashMap<>(DAG)
-                                                        .entrySet()) {
-                                                Envelope e = entry.getKey();
-                                                Node sentBy = e.getSentBy();
-                                                if (sentBy == nodeList.get(i) && e.getType() == EnvelopeType.envcs) {
-                                                        DAG.put(envelope, entry.getKey());
+                                        if (numberOfOnesPerRow[i] == 1) {
+                                                for (int p = 0; p < subtaskEnvelopes.size(); p++) {
+                                                        if (subtaskEnvelopes.get(p).getSentBy() == nodeList.get(i)) {
+                                                                byte[] decryptedResult = decryptWithPrivateKey(
+                                                                                subtaskEnvelopes.get(p)
+                                                                                                .getEncryptedResult(),
+                                                                                subtaskEnvelopes.get(p).getReceivedBy()
+                                                                                                .getPrivateKey());
+                                                                String decryptedResultmessage = new String(
+                                                                                decryptedResult,
+                                                                                StandardCharsets.UTF_8);
+                                                                System.out.println(decryptedResultmessage);
+                                                                Envelope envelope = Envelope.releaseSubTask(nn1,
+                                                                                nodeList.get(j), decryptedResultmessage,
+                                                                                "prime");
+                                                                DAG.put(envelope, subtaskEnvelopes.get(p));
+                                                        }
+                                                }
+                                        } else {
+                                                int q = 0;
+                                                for (int p = 0; p < subtaskEnvelopes.size(); p++) {
+                                                        if (subtaskEnvelopes.get(p).getSentBy() == nodeList.get(i)) {
+                                                                byte[] decryptedResult = decryptWithPrivateKey(
+                                                                                subtaskEnvelopes.get(p)
+                                                                                                .getEncryptedResult(),
+                                                                                subtaskEnvelopes.get(p).getReceivedBy()
+                                                                                                .getPrivateKey());
+                                                                String decryptedResultmessage = new String(
+                                                                                decryptedResult,
+                                                                                StandardCharsets.UTF_8);
+                                                                ArrayList<Double> resultList = new ArrayList<>();
+                                                                int midPoint = decryptedResultmessage.length() / 2;
+                                                                String[] elements;
+                                                                if (q == 0) {
+                                                                        elements = decryptedResultmessage
+                                                                                        .substring(1, midPoint)
+                                                                                        .split(", ");
+                                                                } else {
+                                                                        elements = decryptedResultmessage
+                                                                                        .substring(midPoint + 1)
+                                                                                        .split(", ");
+                                                                }
+                                                                for (String element : elements) {
+                                                                        resultList.add(Double.parseDouble(element));
+                                                                }
+                                                                System.out.println(resultList);
+                                                                q++;
+                                                        }
                                                 }
                                         }
                                 }
                         }
                 }
-                // System.out.println("This is a DAG " + DAG);
 
-                // System.out.println(envOfExectionAndVerification1);
-                envOfExectionAndVerification.addAll(envOfExectionAndVerification1);
-                // aocBlock.SubtaskEnvelopes = envOfExectionAndVerification;
-                // System.out.println(envOfExectionAndVerification);
+                aocBlock.DAG = DAG;
 
-                ArrayList<Envelope> resultEnvelopes = new ArrayList<>();
-                for (int i = 0; i < envOfExectionAndVerification1.size(); i++) {
-                        Node sentBy = envOfExectionAndVerification1.get(i).getReceivedBy();
-                        Node receivedBy = envOfExectionAndVerification1.get(i).getSentBy();
-                        Envelope subtaskResultEnvelope = new Envelope(EnvelopeType.envcs, sentBy, receivedBy);
-                        resultEnvelopes.add(subtaskResultEnvelope);
-                        for (Map.Entry<Envelope, Envelope> entry : new LinkedHashMap<>(DAG).entrySet()) {
-                                if (entry.getKey() == envOfExectionAndVerification1.get(i)) {
-                                        DAG.put(subtaskResultEnvelope, entry.getKey());
-                                }
-                        }
-                }
+                // sc.close();
 
-                Envelope commitmentEnvelope = new Envelope(EnvelopeType.envcm, nn1, null);
-                DAG.put(commitmentEnvelope, null);
-                // System.out.println(DAG);
-                Scanner sc = new Scanner(System.in);
+                return aocBlock;
+                // for (int i = 1; i < matrix.length; i++) {
+                // for (int j = 1; j < matrix.length; j++) {
+                // if (matrix[i][j] == 1) {
+                // if (numberOfOnesPerRow[i] == 1) {
+                // for (int p = 0; p < subtaskEnvelopes.size(); p++) {
+                // if (subtaskEnvelopes.get(p).getSentBy() == nodeList.get(i)) {
+                // byte[] decryptedResult = decryptWithPrivateKey(
+                // subtaskEnvelopes.get(p)
+                // .getEncryptedResult(),
+                // subtaskEnvelopes.get(p).getReceivedBy()
+                // .getPrivateKey());
+                // String decryptedResultmessage = new String(
+                // decryptedResult,
+                // StandardCharsets.UTF_8);
+                // System.out.println(decryptedResultmessage);
+                // Envelope envelope = Envelope.releaseSubTask(nn1,
+                // nodeList.get(j), decryptedResultmessage,
+                // "prime");
+                // DAG.put(envelope, subtaskEnvelopes.get(p));
+                // }
+                // }
+                // } else {
+                // int q = 0;
+                // for (int p = 0; p < subtaskEnvelopes.size(); p++) {
+                // if (subtaskEnvelopes.get(p).getSentBy() == nodeList.get(i)) {
+                // if (q == 0) {
+                // byte[] decryptedResult = decryptWithPrivateKey(
+                // subtaskEnvelopes.get(p)
+                // .getEncryptedResult(),
+                // subtaskEnvelopes.get(p)
+                // .getReceivedBy()
+                // .getPrivateKey());
+                // String decryptedResultmessage = new String(
+                // decryptedResult,
+                // StandardCharsets.UTF_8);
+                // ArrayList<Double> resultList = new ArrayList<>();
+                // int midPoint = decryptedResultmessage.length()
+                // / 2;
+                // String[] elements = decryptedResultmessage
+                // .substring(1, midPoint)
+                // .split(", ");
+                // for (String element : elements) {
+                // resultList.add(Double
+                // .parseDouble(element));
+                // }
+                // System.out.println(resultList);
 
-                ArrayList<Envelope> challengeEnvelopes = new ArrayList<>();
-                for (int i = 1; i < aocBlock.nodeList.size(); i++) {
-                        System.out.println("Does " + aocBlock.nodeList.get(i).getNodeId()
-                                        + " want to challenge the result");
-                        Boolean bool = sc.nextBoolean();
-                        if (bool == true) {
-                                Envelope envelope = new Envelope(EnvelopeType.envch, aocBlock.nodeList.get(i),
-                                                aocBlock.nodeList.get(0));
-                                challengeEnvelopes.add(envelope);
-                                DAG.put(envelope, commitmentEnvelope);
-                        }
-                }
+                // } else {
+                // byte[] decryptedResult = decryptWithPrivateKey(
+                // subtaskEnvelopes.get(p)
+                // .getEncryptedResult(),
+                // subtaskEnvelopes.get(p)
+                // .getReceivedBy()
+                // .getPrivateKey());
+                // String decryptedResultmessage = new String(
+                // decryptedResult,
+                // StandardCharsets.UTF_8);
+                // ArrayList<Double> resultList = new ArrayList<>();
+                // int midPoint = decryptedResultmessage.length()
+                // / 2;
+                // String[] elements = decryptedResultmessage
+                // .substring(midPoint)
+                // .split(", ");
+                // for (String element : elements) {
+                // resultList.add(Double
+                // .parseDouble(element));
+                // }
+                // System.out.println(resultList);
+                // }
+                // q++;
+                // }
+                // }
+                // }
 
-                ArrayList<Envelope> proofEnvelopes = new ArrayList<>();
-                for (int i = 0; i < challengeEnvelopes.size(); i++) {
-                        Envelope envelope = new Envelope(EnvelopeType.envpr, aocBlock.nodeList.get(0),
-                                        challengeEnvelopes.get(i).getSentBy());
-                        for (Map.Entry<Envelope, Envelope> entry : new LinkedHashMap<>(DAG).entrySet()) {
-                                if (entry.getKey().getType() == EnvelopeType.envch) {
-                                        DAG.put(envelope, entry.getKey());
-                                }
-                        }
-                        proofEnvelopes.add(envelope);
-                }
+                // }
+                // }
+                // }
+                // // System.out.println("This is a DAG " + DAG);
 
-                // ArrayList<Envelope> negativeVerificationEnvelopes = new ArrayList<>();
+                // // System.out.println(envOfExectionAndVerification1);
+                // envOfExectionAndVerification.addAll(envOfExectionAndVerification1);
+                // // aocBlock.SubtaskEnvelopes = envOfExectionAndVerification;
+                // // System.out.println(envOfExectionAndVerification);
 
-                for (int i = 0; i < proofEnvelopes.size(); i++) {
-                        System.out.println("Does " + proofEnvelopes.get(i).getReceivedBy().getNodeId()
-                                        + " want to negatively verify the proof");
-                        Boolean bool = sc.nextBoolean();
-                        if (bool == true) {
-                                Envelope envelope = new Envelope(EnvelopeType.envvt, aocBlock.nodeList.get(i),
-                                                aocBlock.nodeList.get(0));
-                                for (Map.Entry<Envelope, Envelope> entry : new LinkedHashMap<>(DAG).entrySet()) {
-                                        if (entry.getKey().getType() == EnvelopeType.envpr
-                                                        && entry.getKey().getReceivedBy() == envelope.getSentBy()) {
-                                                DAG.put(envelope, entry.getKey());
-                                        }
-                                }
-                        }
-                }
+                // ArrayList<Envelope> resultEnvelopes = new ArrayList<>();
+                // for (int i = 0; i < envOfExectionAndVerification1.size(); i++) {
+                // Node sentBy = envOfExectionAndVerification1.get(i).getReceivedBy();
+                // Node receivedBy = envOfExectionAndVerification1.get(i).getSentBy();
+                // Envelope subtaskResultEnvelope = new Envelope(EnvelopeType.envcs, sentBy,
+                // receivedBy);
+                // resultEnvelopes.add(subtaskResultEnvelope);
+                // for (Map.Entry<Envelope, Envelope> entry : new
+                // LinkedHashMap<>(DAG).entrySet()) {
+                // if (entry.getKey() == envOfExectionAndVerification1.get(i)) {
+                // DAG.put(subtaskResultEnvelope, entry.getKey());
+                // }
+                // }
+                // }
+
+                // Envelope commitmentEnvelope = new Envelope(EnvelopeType.envcm, nn1, null);
+                // DAG.put(commitmentEnvelope, null);
+                // // System.out.println(DAG);
+                // Scanner sc = new Scanner(System.in);
+
+                // ArrayList<Envelope> challengeEnvelopes = new ArrayList<>();
+                // for (int i = 1; i < aocBlock.nodeList.size(); i++) {
+                // System.out.println("Does " + aocBlock.nodeList.get(i).getNodeId()
+                // + " want to challenge the result");
+                // Boolean bool = sc.nextBoolean();
+                // if (bool == true) {
+                // Envelope envelope = new Envelope(EnvelopeType.envch,
+                // aocBlock.nodeList.get(i),
+                // aocBlock.nodeList.get(0));
+                // challengeEnvelopes.add(envelope);
+                // DAG.put(envelope, commitmentEnvelope);
+                // }
+                // }
+
+                // ArrayList<Envelope> proofEnvelopes = new ArrayList<>();
+                // for (int i = 0; i < challengeEnvelopes.size(); i++) {
+                // Envelope envelope = new Envelope(EnvelopeType.envpr,
+                // aocBlock.nodeList.get(0),
+                // challengeEnvelopes.get(i).getSentBy());
+                // for (Map.Entry<Envelope, Envelope> entry : new
+                // LinkedHashMap<>(DAG).entrySet()) {
+                // if (entry.getKey().getType() == EnvelopeType.envch) {
+                // DAG.put(envelope, entry.getKey());
+                // }
+                // }
+                // proofEnvelopes.add(envelope);
+                // }
+
+                // // ArrayList<Envelope> negativeVerificationEnvelopes = new ArrayList<>();
+
+                // for (int i = 0; i < proofEnvelopes.size(); i++) {
+                // System.out.println("Does " +
+                // proofEnvelopes.get(i).getReceivedBy().getNodeId()
+                // + " want to negatively verify the proof");
+                // Boolean bool = sc.nextBoolean();
+                // if (bool == true) {
+                // Envelope envelope = new Envelope(EnvelopeType.envvt,
+                // aocBlock.nodeList.get(i),
+                // aocBlock.nodeList.get(0));
+                // for (Map.Entry<Envelope, Envelope> entry : new
+                // LinkedHashMap<>(DAG).entrySet()) {
+                // if (entry.getKey().getType() == EnvelopeType.envpr
+                // && entry.getKey().getReceivedBy() == envelope.getSentBy()) {
+                // DAG.put(envelope, entry.getKey());
+                // }
+                // }
+                // }
+                // }
 
                 // System.out.println(DAG.size());
                 // System.out.println(DAG);
 
-                aocBlock.DAG = DAG;
-
-                sc.close();
-
-                return aocBlock;
         }
-
-        //public static void main(String[] args) {
-
-                // aocBlock.NegativeVerificationEnvelopes = negativeVerificationEnvelopes;
-
-                // System.out.println(negativeVerificationEnvelopes.toString());
-
-                // Envelope envcm = new Envelope(EnvelopeType.envcm, nn1, cn1);
-                // System.out.println(envcm);
-                // aocBlock.commitmentOfResult = envcm;
-
-                // System.out.println(T1.getSubtasks().toString());
-
-                // for (int i = 0; i < matrix.length; i++) {
-                // for (int j = 0; j < matrix.length; j++) {
-
-                // if (i == 0 && matrix[i][j] == 1) { // For directed edges from nearby node
-                // which creates envelope of the
-                // // type envrv
-                // Node recieverNode = aocBlock.nodeList.get(j);
-                // String envId = aocBlock.nodeList.get(i).getNodeId() +
-                // aocBlock.nodeList.get(j).getNodeId();
-                // Envelope e1 = new Envelope(EnvelopeType.envrv, envId,
-                // aocBlock.nodeList.get(i), recieverNode, null,
-                // null);
-
-                // Envnn1.add(e1);
-                // }
-                // else if (matrix[i][j] == 1 && j != 0) { // For directed edges from
-                // cooperative Edge Nodes except when
-                // // the reciever edge node is nn14
-                // String envId1 = aocBlock.nodeList.get(i).getNodeId() +
-                // aocBlock.nodeList.get(0).getNodeId();
-                // Node reciverNode = aocBlock.nodeList.get(j);
-                // String envId2 = aocBlock.nodeList.get(0).getNodeId() +
-                // aocBlock.nodeList.get(i).getNodeId();
-                // Envelope e2 = new Envelope(EnvelopeType.envcs, envId1,
-                // aocBlock.nodeList.get(i),
-                // aocBlock.nodeList.get(0), null,
-                // null);
-                // Envelope e4 = new Envelope(EnvelopeType.envrv, envId2,
-                // aocBlock.nodeList.get(0), reciverNode, null,
-                // null);
-                // Envnn1.add(e2);
-                // Envnn1.add(e4);
-                // }
-
-                // }
-                // }
-
-                // for (int i = 0; i < matrix.length; i++) {
-                // if (matrix[i][0] == 1) {
-                // Node recieverNode = aocBlock.nodeList.get(0);
-                // String envId = aocBlock.nodeList.get(i).getNodeId() +
-                // aocBlock.nodeList.get(0).getNodeId();
-                // Envelope e3 = new Envelope(EnvelopeType.envcs, envId,
-                // aocBlock.nodeList.get(i), recieverNode, null,
-                // null);
-                // Envnn1.add(e3);
-                // }
-                // }
-
-                // System.out.println("EnvelopeType" + " " + "Sent By" + " " + "Sent To" + " ");
-                // for (int i = 0; i < Envnn1.size(); i++) {
-                // System.out.println(Envnn1.get(i).getType() + " " +
-                // Envnn1.get(i).getSentBy().getNodeId()
-                // + " " + Envnn1.get(i).getReceivedBy().getNodeId());
-                // }
-
-                // Scanner sc = new Scanner(System.in);
-
-                // ArrayList<Envelope> ChallengeEnvelopes = new ArrayList<>();
-                // System.out.println("Challenge Envelopes:");
-                // ArrayList<Node> challengedNodes = new ArrayList<>();
-
-                // for (int i = 1; i < aocBlock.nodeList.size(); i++) {
-                // System.out.println("Does " + aocBlock.nodeList.get(i).getNodeId() + "wantsto
-                // challenge the result");
-                // Boolean n = sc.nextBoolean();
-                // if (n) {
-                // challengedNodes.add(aocBlock.nodeList.get(i));
-                // String id = EnvelopeType.envch.toString() +
-                // aocBlock.nodeList.get(i).getNodeId()
-                // + aocBlock.nodeList.get(0).getNodeId();
-                // Envelope newEnvelope = new Envelope(EnvelopeType.envch, id,
-                // aocBlock.nodeList.get(i),
-                // aocBlock.nodeList.get(0));
-                // ChallengeEnvelopes.add(newEnvelope);
-                // } else {
-                // int score = nodeList.get(i).getTrustScore().getCorrectnessOfSubTaskResult();
-                // score++;
-                // nodeList.get(i).getTrustScore().setCorrectnessOfSubTaskResult(score);
-                // }
-                // }
-
-                // System.out.println("Challenge Envelopes:");
-                // System.out.println("EnvelopeType" + " " + "Sent By" + " " + "Sent To" + " ");
-                // for (int i = 0; i < ChallengeEnvelopes.size(); i++) {
-                // System.out.println(ChallengeEnvelopes.get(i).getType() + " "
-                // + ChallengeEnvelopes.get(i).getSentBy().getNodeId()
-                // + " " + ChallengeEnvelopes.get(i).getReceivedBy().getNodeId());
-                // }
-
-                // ArrayList<Envelope> proofEnvelopes = new ArrayList<>();
-                // System.out.println("Envelope of Proofs");
-                // for (int i = 0; i < ChallengeEnvelopes.size(); i++) {
-                // String id = EnvelopeType.envpr.toString() +
-                // aocBlock.nodeList.get(0).getNodeId()
-                // + ChallengeEnvelopes.get(i).getSentBy().getNodeId();
-                // Envelope newEnvelope = new Envelope(EnvelopeType.envpr, id,
-                // aocBlock.nodeList.get(0),
-                // ChallengeEnvelopes.get(i).getSentBy());
-                // proofEnvelopes.add(newEnvelope);
-                // }
-
-                // System.out.println("EnvelopeType" + " " + "Sent By" + " " + "Sent To" + " ");
-                // for (int i = 0; i < proofEnvelopes.size(); i++) {
-                // System.out.println(proofEnvelopes.get(i).getType() + " "
-                // + proofEnvelopes.get(i).getSentBy().getNodeId()
-                // + " " + proofEnvelopes.get(i).getReceivedBy().getNodeId());
-                // }
-
-                // ArrayList<Envelope> negativelyVerifiedList = new ArrayList<>();
-                // HashMap<Node, Boolean> hMap = new HashMap<>();
-                // for (int i = 0; i < proofEnvelopes.size(); i++) {
-                // String id = EnvelopeType.envvt.toString() +
-                // proofEnvelopes.get(i).getReceivedBy().getNodeId()
-                // + proofEnvelopes.get(i).getSentBy().getNodeId();
-                // Envelope newEnvelope = new Envelope(EnvelopeType.envvt, id,
-                // proofEnvelopes.get(i).getReceivedBy(),
-                // proofEnvelopes.get(i).getSentBy());
-                // System.out.println("Does " +
-                // proofEnvelopes.get(i).getReceivedBy().getNodeId()
-                // + " want to negatively verify the proof:");
-                // Boolean n = sc.nextBoolean();
-                // hMap.put(proofEnvelopes.get(i).getReceivedBy(), n);
-                // if (n) {
-                // negativelyVerifiedList.add(newEnvelope);
-                // }
-                // }
-
-                // for (Envelope i : negativelyVerifiedList) {
-                // System.out.println(i.getSentBy().getNodeId() + " sent the negative
-                // verification correct:");
-                // Boolean n = sc.nextBoolean();
-                // if (n) {
-                // int score1 =
-                // i.getSentBy().getTrustScore().getCorrectnessOfVerificationSubTask();
-                // score1++;
-                // i.getSentBy().getTrustScore().setCorrectnessOfVerificationSubTask(score1);
-                // int score2 =
-                // i.getReceivedBy().getTrustScore().getCorrectnessOfSubTaskResult();
-                // score2--;
-                // i.getReceivedBy().getTrustScore().setCorrectnessOfSubTaskResult(score2);
-                // } else {
-                // int score1 =
-                // i.getReceivedBy().getTrustScore().getCorrectnessOfSubTaskResult();
-                // score1++;
-                // i.getReceivedBy().getTrustScore().setCorrectnessOfSubTaskResult(score1);
-                // int score2 =
-                // i.getSentBy().getTrustScore().getCorrectnessOfVerificationSubTask();
-                // score2--;
-                // i.getSentBy().getTrustScore().setCorrectnessOfVerificationSubTask(score2);
-                // }
-                // }
-
-                // System.out.println("EnvelopeType" + " " + "Sent By" + " " + "Sent To" + " ");
-                // for (int i = 0; i < negativelyVerifiedList.size(); i++) {
-                // System.out.println(negativelyVerifiedList.get(i).getType() + " "
-                // + negativelyVerifiedList.get(i).getSentBy().getNodeId()
-                // + " " + negativelyVerifiedList.get(i).getReceivedBy().getNodeId());
-                // }
-                // sc.close();
-
-                // System.out.println("Trust Score of nn1 " + scoreOfNN1.calculateTrustScore());
-                // System.out.println("Trust Score of cn1 " + scoreOfCN1.calculateTrustScore());
-                // System.out.println("Trust Score of cn2 " + scoreOfCN2.calculateTrustScore());
-                // System.out.println("Trust Score of cn3 " + scoreOfCN3.calculateTrustScore());
-                // System.out.println("Trust Score of cn4 " + scoreOfCN4.calculateTrustScore());
-        //}
 }
