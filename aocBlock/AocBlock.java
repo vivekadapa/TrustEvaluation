@@ -40,6 +40,24 @@ public class AocBlock {
                 return cipher.doFinal(input);
         }
 
+        public static boolean isPrime(int n, double sqrt) {
+
+                if (n <= 1)
+                        return false;
+
+                if (n == 2 || n == 3)
+                        return true;
+
+                if (n % 2 == 0 || n % 3 == 0)
+                        return false;
+
+                for (int i = 5; i <= sqrt; i = i + 6)
+                        if (n % i == 0 || n % (i + 2) == 0)
+                                return false;
+
+                return true;
+        }
+
         public AocBlock blockGeneration() throws Exception {
                 int[][] matrix = {
                                 { 0, 1, 0, 1, 0 },
@@ -143,7 +161,7 @@ public class AocBlock {
                         numberOfOnesPerRow[i] = count;
                 }
 
-                int q = 0; 
+                int q = 0;
                 for (int i = 1; i < matrix.length; i++) {
                         for (int j = 1; j < matrix.length; j++) {
                                 if (matrix[i][j] == 1) {
@@ -151,36 +169,45 @@ public class AocBlock {
                                                 if (envelope.getSentBy() == nodeList.get(i)) {
                                                         byte[] decryptedResult = decryptWithPrivateKey(
                                                                         envelope.getEncryptedResult(),
-                                                                        envelope.getReceivedBy().getPrivateKey());
+                                                                        envelope.getReceivedBy()
+                                                                                        .getPrivateKey());
                                                         String decryptedResultmessage = new String(
                                                                         decryptedResult,
                                                                         StandardCharsets.UTF_8);
-                                                        System.out.println("\nDecrypted Result : "
-                                                                        + decryptedResultmessage);
-                                                        Envelope newEnvelope = Envelope.releaseSubTask(nn1,
-                                                                        nodeList.get(j), decryptedResultmessage,
-                                                                        "prime");
-                                                        DAG.put(newEnvelope, envelope);
+                                                        // System.out.println("\nDecrypted Result : "
+                                                        // + decryptedResultmessage);
                                                         if (numberOfOnesPerRow[i] != 1) {
                                                                 ArrayList<Double> resultList = new ArrayList<>();
                                                                 String[] items = decryptedResultmessage.split(",");
-                                                                int midPoint = (items.length / 2)+1;
+                                                                int midPoint = (items.length / 2) + 1;
 
-                                                                System.out.println("Mid point : " + midPoint);
+                                                                // System.out.println("Mid point : " + midPoint);
                                                                 String[] elements = (q == 0)
                                                                                 ? Arrays.copyOfRange(items, 0, midPoint)
                                                                                 : Arrays.copyOfRange(items, midPoint,
                                                                                                 items.length);
                                                                 for (String element : elements) {
-                                                                       
+
                                                                         element = element.trim().replaceAll("^\\[|]$",
                                                                                         "");
                                                                         resultList.add(Double.parseDouble(element));
                                                                 }
 
-                                                                System.out.println("\nTask division result : "
-                                                                                + resultList);
+                                                                // System.out.println("\nTask division result : "
+                                                                // + resultList);
                                                                 q++;
+                                                                Envelope newEnvelope = Envelope.releaseSubTask(nn1,
+                                                                                nodeList.get(j), resultList.toString(),
+                                                                                "prime");
+                                                                DAG.put(newEnvelope, envelope);
+                                                                envOfExectionAndVerification1.add(newEnvelope);
+                                                        } else {
+                                                                Envelope newEnvelope = Envelope.releaseSubTask(nn1,
+                                                                                nodeList.get(j), decryptedResultmessage,
+                                                                                "prime");
+                                                                DAG.put(newEnvelope, envelope);
+                                                                envOfExectionAndVerification1.add(newEnvelope);
+
                                                         }
                                                 }
                                         }
@@ -188,9 +215,66 @@ public class AocBlock {
                         }
                 }
 
-                // // System.out.println("This is a DAG " + DAG);
+                // System.out.println("This is a DAG " + DAG);
 
-                // // System.out.println(envOfExectionAndVerification1);
+                // System.out.println(envOfExectionAndVerification1);
+                ArrayList<Envelope> finalSubTaskEnvelopes = new ArrayList<>();
+                int z = 1;
+                for (Envelope e : envOfExectionAndVerification1) {
+                        byte[] decryptedY = decryptWithPrivateKey(
+                                        e.getEncryptedY(),
+                                        e.getReceivedBy()
+                                                        .getPrivateKey());
+                        String decryptedYmessage = new String(
+                                        decryptedY,
+                                        StandardCharsets.UTF_8);
+                        ArrayList<Double> arrayList = new ArrayList<>();
+                        String[] elements = decryptedYmessage.substring(1, decryptedYmessage.length() - 1)
+                                        .split(",\\s*");
+                        for (String element : elements) {
+                                arrayList.add(Double.parseDouble(element));
+                        }
+                        byte[] decryptedF = decryptWithPrivateKey(e.getEncryptedF(), e.getReceivedBy().getPrivateKey());
+                        String decryptedFmessage = new String(
+                                        decryptedF,
+                                        StandardCharsets.UTF_8);
+                        ArrayList<Boolean> isPrime = new ArrayList<>();
+                        // System.out.println(decryptedYmessage);
+                        if (decryptedFmessage.equals("prime")) {
+                                for (int i = 0; i < arrayList.size(); i++) {
+                                        if (arrayList.get(i) != 0.0) {
+                                                isPrime.add(isPrime(z, arrayList.get(i)));
+                                                z++;
+                                        }
+                                }
+                        }
+                        // System.out.println(e.getPrevHash());
+                        Envelope env = Envelope.subTaskResultEnvelope(e.getReceivedBy(), nodeList.get(0),
+                                        isPrime.toString(), e.getPrevHash());
+                        finalSubTaskEnvelopes.add(env);
+                        DAG.put(env, e);
+                        // System.out.println(isPrime);
+                }
+                ArrayList<Boolean> finalResult = new ArrayList<>();
+                for (Envelope e : finalSubTaskEnvelopes) {
+                        byte[] decryptedResult = decryptWithPrivateKey(
+                                        e.getEncryptedResult(),
+                                        e.getReceivedBy()
+                                                        .getPrivateKey());
+                        String decryptedResultmessage = new String(
+                                        decryptedResult,
+                                        StandardCharsets.UTF_8);
+                        ArrayList<Boolean> arrayList = new ArrayList<>();
+                        String[] elements = decryptedResultmessage.substring(1, decryptedResultmessage.length() - 1)
+                                        .split(",\\s*");
+                        for (String element : elements) {
+                                arrayList.add(Boolean.parseBoolean(element));
+                        }
+                        finalResult.addAll(arrayList);
+                }
+
+                System.out.println(finalResult);
+
                 // envOfExectionAndVerification.addAll(envOfExectionAndVerification1);
                 // // aocBlock.SubtaskEnvelopes = envOfExectionAndVerification;
                 // // System.out.println(envOfExectionAndVerification);
