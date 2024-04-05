@@ -30,9 +30,7 @@ public class Envelope {
     private byte[] encryptedF;
     private byte[] encryptedResult;
     private String prevHash;
-    
-
-    
+    private byte[] testcase;
 
     public String getTime() {
         return time;
@@ -41,8 +39,6 @@ public class Envelope {
     public void setTime(String time) {
         this.time = time;
     }
-    
-
 
     public byte[] getEncryptedY() {
         return EncryptedY;
@@ -60,6 +56,12 @@ public class Envelope {
         this.encryptedF = encryptedF;
     }
 
+    public Envelope(EnvelopeType type,Node sentBy,Node receivedBy){
+        this.type = type;
+        this.sentBy = sentBy;
+        this.receivedBy = receivedBy;
+    }
+
     public Envelope(EnvelopeType type, Node sentBy, String Signature, String time) {
         this.type = type;
         this.envId = generateEnvId();
@@ -68,7 +70,8 @@ public class Envelope {
         this.Signature = Signature;
     }
 
-    public Envelope(EnvelopeType type,Node sentBy,Node receivedBy,byte[] EncryptedResult,String prevHash){
+
+    public Envelope(EnvelopeType type, Node sentBy, Node receivedBy, byte[] EncryptedResult, String prevHash) {
         this.type = type;
         this.envId = generateEnvId();
         this.sentBy = sentBy;
@@ -80,7 +83,8 @@ public class Envelope {
     // new Envelope(EnvelopeType.envrv, nearbyEdgeNode, cooperativeEdgeNode,y_s1,f1
     // base64Signature);
 
-    public Envelope(EnvelopeType type, Node sentBy, Node receivedBy, String signature, byte[] encryptedY,byte[] encryptedF,String time) {
+    public Envelope(EnvelopeType type, Node sentBy, Node receivedBy, String signature, byte[] encryptedY,
+            byte[] encryptedF, String time) {
         this.type = type;
         this.envId = generateEnvId();
         this.sentBy = sentBy;
@@ -88,6 +92,19 @@ public class Envelope {
         this.Signature = signature;
         this.encryptedF = encryptedF;
         this.EncryptedY = encryptedY;
+        this.time = time;
+    }
+
+    public Envelope(EnvelopeType type, Node sentBy, Node receivedBy, String signature, byte[] encryptedY,
+            byte[] encryptedF, byte[] testcase, String time) {
+        this.type = type;
+        this.envId = generateEnvId();
+        this.sentBy = sentBy;
+        this.receivedBy = receivedBy;
+        this.Signature = signature;
+        this.encryptedF = encryptedF;
+        this.EncryptedY = encryptedY;
+        this.testcase = testcase;
         this.time = time;
     }
 
@@ -114,7 +131,8 @@ public class Envelope {
     public String hashEnvelope() {
         try {
             // Concatenate relevant fields into a string
-            String envelopeData = this.type.toString() + this.envId + this.sentBy.toString() + this.receivedBy.toString() + this.time + this.Signature;
+            String envelopeData = this.type.toString() + this.envId + this.sentBy.toString()
+                    + this.receivedBy.toString() + this.time + this.Signature;
 
             // Compute the hash of the concatenated string using SHA-256 algorithm
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
@@ -136,10 +154,11 @@ public class Envelope {
         }
     }
 
-    // private static byte[] encryptWithPublicKey(byte[] input, PublicKey publicKey) throws Exception {
-    //     Cipher cipher = Cipher.getInstance("RSA");
-    //     cipher.init(Cipher.ENCRYPT_MODE, publicKey);
-    //     return cipher.doFinal(input);
+    // private static byte[] encryptWithPublicKey(byte[] input, PublicKey publicKey)
+    // throws Exception {
+    // Cipher cipher = Cipher.getInstance("RSA");
+    // cipher.init(Cipher.ENCRYPT_MODE, publicKey);
+    // return cipher.doFinal(input);
     // }
 
     private static byte[] encryptWithPublicKey(byte[] input, PublicKey publicKey) throws Exception {
@@ -170,12 +189,30 @@ public class Envelope {
                 encryptedF, "t1");
     }
 
-    public static Envelope subTaskResultEnvelope(Node sentBy,Node receivedBy,String sAns,String prevHash) throws Exception{
-        // System.out.println(Arrays.toString(sAns.getBytes(StandardCharsets.UTF_8)));
-        byte[] encryptedResult = encryptWithPublicKey(sAns.getBytes(StandardCharsets.UTF_8), receivedBy.getPublicKey());
-        return new Envelope(EnvelopeType.envcs, sentBy, receivedBy,encryptedResult,prevHash);
+    public static Envelope verifyAndReleaseSubTask(Node sentBy, Node receivedBy, String y_s2, String f2, String y_s1,
+            String f1, String sAns) throws Exception {
+        PrivateKey privateKey = sentBy.getPrivateKey();
+        // byte[] encryptedY1 = encryptWithPublicKey(y_s1.getBytes(StandardCharsets.UTF_8), receivedBy.getPublicKey());
+        // byte[] encryptedF1 = encryptWithPublicKey(f1.getBytes(StandardCharsets.UTF_8), receivedBy.getPublicKey());
+        byte[] encryptedY2 = encryptWithPublicKey(y_s2.getBytes(StandardCharsets.UTF_8), receivedBy.getPublicKey());
+        byte[] encryptedF2 = encryptWithPublicKey(f2.getBytes(StandardCharsets.UTF_8), receivedBy.getPublicKey());
+        // byte[] encryptedSans = encryptWithPublicKey(sAns.getBytes(StandardCharsets.UTF_8), receivedBy.getPublicKey());
+        byte[] signature = generateSignature(privateKey, sentBy.getPublicKey(), encryptedY2, encryptedF2);
+        String base64Signature = Base64.getEncoder().encodeToString(signature);
+        String testCase = y_s1 + " " + f1 + " " + sAns;
+        byte[] test = encryptWithPublicKey(testCase.getBytes(StandardCharsets.UTF_8), receivedBy.getPublicKey());
+        return new Envelope(EnvelopeType.envrv, sentBy, receivedBy, base64Signature, encryptedY2, encryptedF2, test,
+                "t1");
     }
 
+    public static Envelope subTaskResultEnvelope(Node sentBy, Node receivedBy, String sAns, String prevHash)
+            throws Exception {
+        // System.out.println(Arrays.toString(sAns.getBytes(StandardCharsets.UTF_8)));
+        byte[] encryptedResult = encryptWithPublicKey(sAns.getBytes(StandardCharsets.UTF_8), receivedBy.getPublicKey());
+        return new Envelope(EnvelopeType.envcs, sentBy, receivedBy, encryptedResult, prevHash);
+    }
+
+    // public static Envelope challengeEnvelope(Node sent,Node recievedby,)
 
     public static String extractDataFromSignature(String base64Signature, PublicKey publicKey, Signature signature)
             throws Exception {
@@ -271,8 +308,8 @@ public class Envelope {
         // + this.envId
         // + "\nEnvelope SentBy: " + this.sentBy
         // + " Envelope Sent to:" + this.receivedBy;
-        return "\nEnvelope Type: " + this.type + "\nEnvelope SentBy: " + this.sentBy + "\nEnvelope Received By: "
-                + this.receivedBy + "\n" + "EncryptedY: " + this.EncryptedY ;
+        return "Envelope Type: " + this.type + "\nEnvelope SentBy: " + this.sentBy + "\nEnvelope Received By: "
+                + this.receivedBy + "\n" + "EncryptedY: " + this.EncryptedY;
     }
 
     public byte[] getEncryptedResult() {

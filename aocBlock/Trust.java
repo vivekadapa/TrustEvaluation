@@ -1,15 +1,15 @@
 public class Trust {
     private int taskCompletion;
-    private int timelines;
+    private int timeliness;
     private int correctnessOfTaskResult;
     private int correctnessOfSubTaskResult;
     private int correctnessOfVerficationTask;
     private int correctnessOfVerificationSubTask;
 
-    public Trust(int taskCompletion, int timelines, int correctnessOfTaskResult, int correctnessOfSubTaskResult,
+    public Trust(int taskCompletion, int timeliness, int correctnessOfTaskResult, int correctnessOfSubTaskResult,
             int correctnessOfVerficationTask, int correctnessOfVerificationSubTask) {
         this.taskCompletion = taskCompletion;
-        this.timelines = timelines;
+        this.timeliness = timeliness;
         this.correctnessOfTaskResult = correctnessOfTaskResult;
         this.correctnessOfSubTaskResult = correctnessOfSubTaskResult;
         this.correctnessOfVerficationTask = correctnessOfVerficationTask;
@@ -24,12 +24,12 @@ public class Trust {
         this.taskCompletion = taskCompletion;
     }
 
-    public int getTimelines() {
-        return timelines;
+    public int getTimeliness() {
+        return timeliness;
     }
 
-    public void setTimelines(int timelines) {
-        this.timelines = timelines;
+    public void setTimeliness(int timeliness) {
+        this.timeliness = timeliness;
     }
 
     public int getCorrectnessOfTaskResult() {
@@ -65,11 +65,19 @@ public class Trust {
     }
 
     public float calculateTrustScore() {
-        float score = (float) (0.25 * this.getTaskCompletion() + 0.15 * this.getTimelines()
+        float score = (float) (0.25 * this.getTaskCompletion() + 0.15 * this.getTimeliness()
                 + 0.15 * this.getCorrectnessOfSubTaskResult()
                 + 0.15 * this.getCorrectnessOfTaskResult() + 0.15 * this.getCorrectnessOfVerficationTask()
                 + 0.15 * this.getCorrectnessOfVerificationSubTask());
         return score;
+    }
+
+    public String toString() {
+        float finalScore = this.calculateTrustScore();
+        return "Total Score: " + finalScore + " tc=" + this.taskCompletion + " ts=" + this.timeliness + " ct="
+                + this.correctnessOfTaskResult + " cs="
+                + this.correctnessOfSubTaskResult + " vt=" + this.correctnessOfVerficationTask + " vs="
+                + this.correctnessOfVerificationSubTask;
     }
 
 }

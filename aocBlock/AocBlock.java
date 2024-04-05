@@ -274,7 +274,6 @@ public class AocBlock {
                 }
 
                 System.out.println(finalResult);
-
                 // envOfExectionAndVerification.addAll(envOfExectionAndVerification1);
                 // // aocBlock.SubtaskEnvelopes = envOfExectionAndVerification;
                 // // System.out.println(envOfExectionAndVerification);
@@ -294,64 +293,89 @@ public class AocBlock {
                 // }
                 // }
 
-                // Envelope commitmentEnvelope = new Envelope(EnvelopeType.envcm, nn1, null);
-                // DAG.put(commitmentEnvelope, null);
+                Envelope commitmentEnvelope = new Envelope(EnvelopeType.envcm, nn1, null);
+                DAG.put(commitmentEnvelope, null);
                 // // System.out.println(DAG);
-                // Scanner sc = new Scanner(System.in);
+                Scanner sc = new Scanner(System.in);
 
-                // ArrayList<Envelope> challengeEnvelopes = new ArrayList<>();
-                // for (int i = 1; i < aocBlock.nodeList.size(); i++) {
-                // System.out.println("Does " + aocBlock.nodeList.get(i).getNodeId()
-                // + " want to challenge the result");
-                // Boolean bool = sc.nextBoolean();
-                // if (bool == true) {
-                // Envelope envelope = new Envelope(EnvelopeType.envch,
-                // aocBlock.nodeList.get(i),
-                // aocBlock.nodeList.get(0));
-                // challengeEnvelopes.add(envelope);
-                // DAG.put(envelope, commitmentEnvelope);
-                // }
-                // }
+                ArrayList<Envelope> challengeEnvelopes = new ArrayList<>();
+                for (int i = 1; i < aocBlock.nodeList.size(); i++) {
+                        System.out.println("Does " + aocBlock.nodeList.get(i).getNodeId()
+                                        + " want to challenge the result");
+                        Boolean bool = sc.nextBoolean();
+                        if (bool == true) {
+                                Envelope envelope = new Envelope(EnvelopeType.envch,
+                                                aocBlock.nodeList.get(i),
+                                                aocBlock.nodeList.get(0));
+                                challengeEnvelopes.add(envelope);
+                                DAG.put(envelope, commitmentEnvelope);
+                        }
+                }
 
-                // ArrayList<Envelope> proofEnvelopes = new ArrayList<>();
-                // for (int i = 0; i < challengeEnvelopes.size(); i++) {
-                // Envelope envelope = new Envelope(EnvelopeType.envpr,
-                // aocBlock.nodeList.get(0),
-                // challengeEnvelopes.get(i).getSentBy());
-                // for (Map.Entry<Envelope, Envelope> entry : new
-                // LinkedHashMap<>(DAG).entrySet()) {
-                // if (entry.getKey().getType() == EnvelopeType.envch) {
-                // DAG.put(envelope, entry.getKey());
-                // }
-                // }
-                // proofEnvelopes.add(envelope);
-                // }
+                ArrayList<Envelope> proofEnvelopes = new ArrayList<>();
+                for (int i = 0; i < challengeEnvelopes.size(); i++) {
+                        Envelope envelope = new Envelope(EnvelopeType.envpr,
+                                        aocBlock.nodeList.get(0),
+                                        challengeEnvelopes.get(i).getSentBy());
+                        for (Map.Entry<Envelope, Envelope> entry : new LinkedHashMap<>(DAG).entrySet()) {
+                                if (entry.getKey().getType() == EnvelopeType.envch) {
+                                        DAG.put(envelope, entry.getKey());
+                                }
+                        }
+                        proofEnvelopes.add(envelope);
+                }
 
-                // // ArrayList<Envelope> negativeVerificationEnvelopes = new ArrayList<>();
+                ArrayList<Envelope> negativeVerificationEnvelopes = new ArrayList<>();
 
-                // for (int i = 0; i < proofEnvelopes.size(); i++) {
-                // System.out.println("Does " +
-                // proofEnvelopes.get(i).getReceivedBy().getNodeId()
-                // + " want to negatively verify the proof");
-                // Boolean bool = sc.nextBoolean();
-                // if (bool == true) {
-                // Envelope envelope = new Envelope(EnvelopeType.envvt,
-                // aocBlock.nodeList.get(i),
-                // aocBlock.nodeList.get(0));
-                // for (Map.Entry<Envelope, Envelope> entry : new
-                // LinkedHashMap<>(DAG).entrySet()) {
-                // if (entry.getKey().getType() == EnvelopeType.envpr
-                // && entry.getKey().getReceivedBy() == envelope.getSentBy()) {
-                // DAG.put(envelope, entry.getKey());
-                // }
-                // }
-                // }
-                // }
+                for (int i = 0; i < proofEnvelopes.size(); i++) {
+                        System.out.println("Does " +
+                                        proofEnvelopes.get(i).getReceivedBy().getNodeId()
+                                        + " want to negatively verify the proof");
+                        Boolean bool = sc.nextBoolean();
+                        if (bool == true) {
+                                Envelope envelope = new Envelope(EnvelopeType.envvt,
+                                                proofEnvelopes.get(i).getReceivedBy(),
+                                                aocBlock.nodeList.get(0));
+                                negativeVerificationEnvelopes.add(envelope);
+                                for (Map.Entry<Envelope, Envelope> entry : new LinkedHashMap<>(DAG).entrySet()) {
+                                        if (entry.getKey().getType() == EnvelopeType.envpr
+                                                        && entry.getKey().getReceivedBy() == envelope.getSentBy()) {
+                                                DAG.put(envelope, entry.getKey());
+                                        }
+                                }
+                        }
+                }
+
+                for (Envelope i : negativeVerificationEnvelopes) {
+                        System.out.println(i.getSentBy().getNodeId() + " sent the negative verification correct:");
+                        Boolean n = sc.nextBoolean();
+                        if (n) {
+                                int score1 = i.getSentBy().getTrustScore().getCorrectnessOfVerificationSubTask();
+                                score1++;
+                                i.getSentBy().getTrustScore().setCorrectnessOfVerificationSubTask(score1);
+                                int score2 = i.getReceivedBy().getTrustScore().getCorrectnessOfSubTaskResult();
+                                score2--;
+                                i.getReceivedBy().getTrustScore().setCorrectnessOfSubTaskResult(score2);
+                        } else {
+                                int score1 = i.getReceivedBy().getTrustScore().getCorrectnessOfSubTaskResult();
+                                score1++;
+                                i.getReceivedBy().getTrustScore().setCorrectnessOfSubTaskResult(score1);
+                                int score2 = i.getSentBy().getTrustScore().getCorrectnessOfVerificationSubTask();
+                                score2--;
+                                i.getSentBy().getTrustScore().setCorrectnessOfVerificationSubTask(score2);
+                        }
+                }
 
                 // System.out.println(DAG.size());
                 // System.out.println(DAG);
 
                 aocBlock.DAG = DAG;
+
+                System.out.println("nn1's score " + scoreOfNN1);
+                System.out.println("cn1's score " + scoreOfCN1);
+                System.out.println("cn2's score " + scoreOfCN2);
+                System.out.println("cn3's score " + scoreOfCN3);
+                System.out.println("cn4's score " + scoreOfCN4);
 
                 // sc.close();
 
@@ -495,31 +519,6 @@ public class AocBlock {
         // hMap.put(proofEnvelopes.get(i).getReceivedBy(), n);
         // if (n) {
         // negativelyVerifiedList.add(newEnvelope);
-        // }
-        // }
-
-        // for (Envelope i : negativelyVerifiedList) {
-        // System.out.println(i.getSentBy().getNodeId() + " sent the negative
-        // verification correct:");
-        // Boolean n = sc.nextBoolean();
-        // if (n) {
-        // int score1 =
-        // i.getSentBy().getTrustScore().getCorrectnessOfVerificationSubTask();
-        // score1++;
-        // i.getSentBy().getTrustScore().setCorrectnessOfVerificationSubTask(score1);
-        // int score2 =
-        // i.getReceivedBy().getTrustScore().getCorrectnessOfSubTaskResult();
-        // score2--;
-        // i.getReceivedBy().getTrustScore().setCorrectnessOfSubTaskResult(score2);
-        // } else {
-        // int score1 =
-        // i.getReceivedBy().getTrustScore().getCorrectnessOfSubTaskResult();
-        // score1++;
-        // i.getReceivedBy().getTrustScore().setCorrectnessOfSubTaskResult(score1);
-        // int score2 =
-        // i.getSentBy().getTrustScore().getCorrectnessOfVerificationSubTask();
-        // score2--;
-        // i.getSentBy().getTrustScore().setCorrectnessOfVerificationSubTask(score2);
         // }
         // }
 
