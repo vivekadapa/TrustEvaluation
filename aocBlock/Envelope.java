@@ -271,7 +271,7 @@ public class Envelope {
         // + this.envId
         // + "\nEnvelope SentBy: " + this.sentBy
         // + " Envelope Sent to:" + this.receivedBy;
-        return "Envelope Type: " + this.type + "\nEnvelope SentBy: " + this.sentBy + "\nEnvelope Received By: "
+        return "\nEnvelope Type: " + this.type + "\nEnvelope SentBy: " + this.sentBy + "\nEnvelope Received By: "
                 + this.receivedBy + "\n" + "EncryptedY: " + this.EncryptedY ;
     }
 

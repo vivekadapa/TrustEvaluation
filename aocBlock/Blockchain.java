@@ -1,32 +1,32 @@
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
 public class Blockchain {
-    
+
     public ArrayList<AocBlock> chain;
-        
-    public Blockchain(ArrayList<AocBlock> chain){
-        this.chain = chain;   
+
+    public Blockchain(ArrayList<AocBlock> chain) {
+        this.chain = chain;
     }
 
-    public void addBlock(AocBlock aocBlock){
+    public void addBlock(AocBlock aocBlock) {
         this.chain.add(aocBlock);
     }
-    
-    public void arbitrationAboutNegVerfication(AocBlock block,String y,String f) {
-        System.out.println(block.getDAG());
-         if(this.chain.contains(block)){
-            LinkedHashMap<Envelope, Envelope> DAG = (LinkedHashMap<Envelope, Envelope>) block.getDAG();
-            for(Entry<Envelope, Envelope> map : DAG.entrySet()){
-                if(map.getKey().getType() == EnvelopeType.envvt || map.getKey().getType() == EnvelopeType.envcm){
-                        if(map.getKey().getType() == EnvelopeType.envvt){
-                            System.out.println(map.getValue());
-                        }
-                }
+
+    public void arbitrationAboutNegVerfication(AocBlock block, String y, String f) {
+        HashMap<Envelope, Envelope> DAG = block.getDAG();
+        if (DAG != null) {
+            for (Entry<Envelope, Envelope> map : DAG.entrySet()) {
+                Envelope key = map.getKey();
+                Envelope value = map.getValue();
+                System.out.println("\nKey: " + key);
+                System.out.println("Value: " + value);
             }
-         }
+        } else {
+            System.out.println("DAG is null for this block.");
+        }
     }
 
     public static void main(String[] args) throws Exception {
@@ -34,8 +34,7 @@ public class Blockchain {
         Blockchain blockchain = new Blockchain(chainList);
         AocBlock aocblock = new AocBlock(null);
         AocBlock block = aocblock.blockGeneration();
-        // blockchain.addBlock(block);
-        // blockchain.arbitrationAboutNegVerfication(block,"y1","f");
-        // System.out.println(block.getDAG());
+        blockchain.addBlock(block);
+        blockchain.arbitrationAboutNegVerfication(block, "y1", "f");
     }
 }
